@@ -44,3 +44,10 @@ Lambda feature overview.
 1. action 1 to deploy the software
 2. action 2
 ...
+
+## My steps
+
+### Commands
+1) syndicate generate project --name task01 cd task01
+2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
+3) syndicate generate lambda --name hello_world --runtime java
