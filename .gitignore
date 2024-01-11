@@ -1,3 +1,5 @@
 .syndicate
 logs/
 MY_SECRET.md
+target/
+bundles/

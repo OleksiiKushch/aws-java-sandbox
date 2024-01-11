@@ -36,7 +36,7 @@
     ]
   },
   "syndicate-demo-api": {
-    "deploy_stage": "test",
+    "deploy_stage": "prod",
     "resource_type": "api_gateway",
     "dependencies": [
       {
