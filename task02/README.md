@@ -1,4 +1,4 @@
-# task01
+# task02
 
 High level project overview - business value it brings, non-detailed technical overview.
 
@@ -7,9 +7,9 @@ All the technical details described below are actual for the particular
 version, or a range of versions of the software.
 ### Actual for versions: 1.0.0
 
-## task01 diagram
+## task02 diagram
 
-![task01](pics/task01_diagram.png)
+![task02](pics/task02_diagram.png)
 
 ## Lambdas descriptions
 
@@ -48,6 +48,6 @@ Lambda feature overview.
 ## My steps
 
 ### Commands
-1) syndicate generate project --name task01 && cd task01
+1) syndicate generate project --name task02 && cd task02
 2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
 3) syndicate generate lambda --name hello_world --runtime java

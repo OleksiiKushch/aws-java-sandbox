@@ -1,0 +1,56 @@
+{
+  "lambda-basic-execution": {
+    "policy_content": {
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem",
+            "dynamodb:Batch*",
+            "dynamodb:DeleteItem",
+            "ssm:PutParameter",
+            "ssm:GetParameter",
+            "kms:Decrypt"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "resource_type": "iam_policy"
+  },
+  "hello_world-role": {
+    "predefined_policies": [],
+    "principal_service": "lambda",
+    "custom_policies": [
+      "lambda-basic-execution"
+    ],
+    "resource_type": "iam_role",
+    "allowed_accounts": [
+      "${account_id}"
+    ]
+  },
+  "syndicate-demo-api": {
+    "deploy_stage": "test",
+    "resource_type": "api_gateway",
+    "dependencies": [
+      {
+        "resource_name": "hello_world",
+        "resource_type": "lambda"
+      }
+    ],
+    "resources": {
+      "/hello": {
+        "GET": {
+          "integration_type": "lambda",
+          "lambda_name": "hello_world"
+        }
+      }
+    }
+  }
+}
