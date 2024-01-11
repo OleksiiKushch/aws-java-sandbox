@@ -47,6 +47,7 @@
     "resources": {
       "/hello": {
         "GET": {
+          "authorization_type": "AWS_IAM",
           "integration_type": "lambda",
           "lambda_name": "hello_world"
         }
