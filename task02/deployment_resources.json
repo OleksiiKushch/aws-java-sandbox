@@ -34,24 +34,5 @@
     "allowed_accounts": [
       "${account_id}"
     ]
-  },
-  "syndicate-demo-api": {
-    "deploy_stage": "prod",
-    "resource_type": "api_gateway",
-    "dependencies": [
-      {
-        "resource_name": "hello_world",
-        "resource_type": "lambda"
-      }
-    ],
-    "resources": {
-      "/hello": {
-        "GET": {
-          "authorization_type": "AWS_IAM",
-          "integration_type": "lambda",
-          "lambda_name": "hello_world"
-        }
-      }
-    }
   }
 }
