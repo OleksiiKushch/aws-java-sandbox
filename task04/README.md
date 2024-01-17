@@ -49,5 +49,8 @@ Lambda feature overview.
 ### Commands
 1) syndicate generate project --name task04 && cd task04
 2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
-3) 
+3) syndicate generate lambda --name sqs_handler --runtime java
+4) syndicate generate meta sqs_queue --resource_name async_queue
+5) syndicate generate lambda --name sns_handler --runtime java
+6) syndicate generate meta sns_topic --resource_name lambda_topic --region eu-central-1
 

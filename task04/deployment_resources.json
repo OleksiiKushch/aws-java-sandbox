@@ -33,6 +33,13 @@
     "resource_type": "iam_role",
     "allowed_accounts": [
       "${account_id}"
+    ],
+    "event_sources": [
+      {
+        "resource_type" : "sqs_trigger",
+        "target_queue" : "async_queue",
+        "batch_size" : 100
+      }
     ]
   },
   "async_queue": {
@@ -56,6 +63,13 @@
     "resource_type": "iam_role",
     "allowed_accounts": [
       "${account_id}"
+    ],
+    "event_sources": [
+      {
+        "target_topic": "sns_handler",
+        "resource_type": "sns_topic_trigger",
+        "region": "eu-central-1"
+      }
     ]
   },
   "lambda_topic": {
