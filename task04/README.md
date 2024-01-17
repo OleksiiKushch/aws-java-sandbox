@@ -44,6 +44,7 @@ Lambda feature overview.
 1. action 1 to deploy the software
 2. action 2
 ...
+
 ## My steps
 
 ### Commands
@@ -53,5 +54,4 @@ Lambda feature overview.
 4) syndicate generate meta sqs_queue --resource_name async_queue
 5) syndicate generate lambda --name sns_handler --runtime java
 6) syndicate generate meta sns_topic --resource_name lambda_topic --region eu-central-1
- 
 
