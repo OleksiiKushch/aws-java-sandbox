@@ -15,14 +15,9 @@
             "ssm:PutParameter",
             "ssm:GetParameter",
             "kms:Decrypt",
+
             "lambda:CreateEventSourceMapping",
-            "lambda:InvokeFunction",
-            "sqs:ReceiveMessage",
-            "sqs:DeleteMessage",
-            "sqs:GetQueueAttributes",
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents"
+            "lambda:InvokeFunction"
           ],
           "Effect": "Allow",
           "Resource": "*"
