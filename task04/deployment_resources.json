@@ -14,7 +14,8 @@
             "dynamodb:DeleteItem",
             "ssm:PutParameter",
             "ssm:GetParameter",
-            "kms:Decrypt"
+            "kms:Decrypt",
+            "lambda:CreateEventSourceMapping"
           ],
           "Effect": "Allow",
           "Resource": "*"
@@ -34,11 +35,17 @@
     "allowed_accounts": [
       "${account_id}"
     ],
+    "dependencies": [
+      {
+        "resource_name": "async_queue",
+        "resource_type": "sqs_queue"
+      }
+    ],
     "event_sources": [
       {
         "resource_type" : "sqs_trigger",
         "target_queue" : "async_queue",
-        "batch_size" : 100
+        "batch_size" : 10
       }
     ]
   },
@@ -64,9 +71,15 @@
     "allowed_accounts": [
       "${account_id}"
     ],
+    "dependencies": [
+      {
+        "resource_name": "lambda_topic",
+        "resource_type": "sns_topic"
+      }
+    ],
     "event_sources": [
       {
-        "target_topic": "sns_handler",
+        "target_topic": "lambda_topic",
         "resource_type": "sns_topic_trigger",
         "region": "eu-central-1"
       }

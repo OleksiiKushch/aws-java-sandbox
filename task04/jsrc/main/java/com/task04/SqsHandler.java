@@ -12,7 +12,7 @@ import com.syndicate.deployment.annotations.events.SqsTriggerEventSource;
 )
 @SqsTriggerEventSource(
 		targetQueue = "async_queue",
-		batchSize = 100
+		batchSize = 10
 )
 public class SqsHandler implements RequestHandler<SQSEvent, Void> {
 
