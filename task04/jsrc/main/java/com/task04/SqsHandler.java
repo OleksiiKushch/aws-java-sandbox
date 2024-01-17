@@ -8,9 +8,7 @@ import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import com.syndicate.deployment.annotations.events.SqsTriggerEventSource;
 
 @LambdaHandler(lambdaName = "sqs_handler",
-	roleName = "sqs_handler-role",
-	isPublishVersion = true,
-	aliasName = "${lambdas_alias_name}"
+	roleName = "sqs_handler-role"
 )
 @SqsTriggerEventSource(
 		targetQueue = "async_queue",
