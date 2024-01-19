@@ -3,6 +3,7 @@ package com.task05;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
+import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -10,6 +11,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,36 +30,51 @@ import com.task05.EventResponse;
         roleName = "api_handler-role"
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private final AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
+            LambdaLogger logger = context.getLogger();
+            logger.log("Start my dynamodb lambda hendler!");
+
+            AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+            DynamoDB dynamoDB = new DynamoDB(client);
+            Table table = dynamoDB.getTable("Events");
+
+            ObjectMapper objectMapper = new ObjectMapper();
             EventRequest eventRequest = objectMapper.readValue(input.getBody(), EventRequest.class);
 
             String id = UUID.randomUUID().toString();
-			String principalId = String.valueOf(eventRequest.getPrincipalId());
-			String body = objectMapper.writeValueAsString(eventRequest.getContent());
+			/*String principalId = String.valueOf(eventRequest.getPrincipalId());
+			String body = objectMapper.writeValueAsString(eventRequest.getContent());*/
 			String createAt = Instant.now().toString();
 
-			Map<String, AttributeValue> item = new HashMap<>();
+			/*Map<String, AttributeValue> item = new HashMap<>();
 			item.put("id", new AttributeValue(id));
             item.put("principalId", new AttributeValue(principalId));
             item.put("body", new AttributeValue(body));
-            item.put("createdAt", new AttributeValue(createAt));
+            item.put("createdAt", new AttributeValue(createAt));*/
 
-            PutItemRequest putItemRequest = new PutItemRequest("Events", item);
-            PutItemResult putItemResult = ddb.putItem(putItemRequest);
+            Item item = new Item()
+                    .withPrimaryKey("id", id)
+                    .withNumber("principalId", eventRequest.getPrincipalId())
+                    .withMap("body", eventRequest.getContent())
+                    .withString("createdAt", createAt);
+            logger.log(item.toString());
+            PutItemOutcome outcome = table.putItem(item);
 
-            EventResponse eventResponse = new EventResponse();
+            /*PutItemRequest putItemRequest = new PutItemRequest("Events", item);
+            PutItemResult putItemResult = ddb.putItem(putItemRequest);*/
+
+            /*EventResponse eventResponse = new EventResponse();
             eventResponse.setId(id);
             eventResponse.setPrincipalId(eventRequest.getPrincipalId());
             eventResponse.setBody(eventRequest.getContent());
-            eventResponse.setCreatedAt(createAt);
+            eventResponse.setCreatedAt(createAt);*/
 
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(201)
-                    .withBody(objectMapper.writeValueAsString(eventResponse));
+                    /*.withBody(objectMapper.writeValueAsString(eventResponse));*/
+                    .withBody(objectMapper.writeValueAsString(outcome));
         } catch (Exception e) {
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(500)
