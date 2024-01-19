@@ -34,16 +34,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
         try {
             LambdaLogger logger = context.getLogger();
-            logger.log("Start my dynamodb lambda hendler!");
 
             AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
             DynamoDB dynamoDB = new DynamoDB(client);
             Table table = dynamoDB.getTable("Events");
-            logger.log("Get table `Events`");
 
+            logger.log(UUID.randomUUID().toString());
             ObjectMapper objectMapper = new ObjectMapper();
+            logger.log(input.getBody());
             EventRequest eventRequest = objectMapper.readValue(input.getBody(), EventRequest.class);
-            logger.log(eventRequest.toString());
 
             String id = UUID.randomUUID().toString();
 			/*String principalId = String.valueOf(eventRequest.getPrincipalId());
