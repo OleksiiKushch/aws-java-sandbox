@@ -15,6 +15,7 @@ import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.regions.Regions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,7 +35,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         LambdaLogger logger = context.getLogger();
         try {
-            AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+            AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
+                    .withRegion(Regions.EU_CENTRAL_1)
+                    .build();
             DynamoDB dynamoDB = new DynamoDB(client);
             Table table = dynamoDB.getTable("Events");
 
