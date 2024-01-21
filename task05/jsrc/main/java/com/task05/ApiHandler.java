@@ -32,8 +32,8 @@ import com.task05.EventResponse;
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final String PREFIX = "cmtr-4df2c6a7-"
-    private static final String SUFFIX = "-test"
+    private static final String PREFIX = "cmtr-4df2c6a7-";
+    private static final String SUFFIX = "-test";
     private static final String TABLE_NAME = PREFIX + "Events" + SUFFIX;
     private static final String ITEM_ID_ATTR = "id";
     private static final String ITEM_PRINCIPAL_ID_ATTR = "id";
