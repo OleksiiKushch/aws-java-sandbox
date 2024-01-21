@@ -36,7 +36,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
     private static final String SUFFIX = "-test";
     private static final String TABLE_NAME = PREFIX + "Events" + SUFFIX;
     private static final String ITEM_ID_ATTR = "id";
-    private static final String ITEM_PRINCIPAL_ID_ATTR = "id";
+    private static final String ITEM_PRINCIPAL_ID_ATTR = "principalId";
     private static final String ITEM_BODY_ATTR = "body";
     private static final String ITEM_CREATE_AT_ATTR = "createdAt";
 
