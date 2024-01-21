@@ -39,7 +39,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
                     .withRegion(Regions.EU_CENTRAL_1)
                     .build();
             DynamoDB dynamoDB = new DynamoDB(client);
-            Table table = dynamoDB.getTable("Events");
+            Table table = dynamoDB.getTable("cmtr-4df2c6a7-Events-test");
 
             ObjectMapper objectMapper = new ObjectMapper();
             EventRequest eventRequest = objectMapper.readValue(request.getBody(), EventRequest.class);
