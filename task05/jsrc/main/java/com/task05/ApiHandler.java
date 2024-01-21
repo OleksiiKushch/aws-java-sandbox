@@ -32,6 +32,14 @@ import com.task05.EventResponse;
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+    private static final String PREFIX = "cmtr-4df2c6a7-"
+    private static final String SUFFIX = "-test"
+    private static final String TABLE_NAME = PREFIX + "Events" + SUFFIX;
+    private static final String ITEM_ID_ATTR = "id";
+    private static final String ITEM_PRINCIPAL_ID_ATTR = "id";
+    private static final String ITEM_BODY_ATTR = "body";
+    private static final String ITEM_CREATE_AT_ATTR = "createdAt";
+
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         LambdaLogger logger = context.getLogger();
         try {
@@ -39,43 +47,23 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
                     .withRegion(Regions.EU_CENTRAL_1)
                     .build();
             DynamoDB dynamoDB = new DynamoDB(client);
-            Table table = dynamoDB.getTable("cmtr-4df2c6a7-Events-test");
+            Table table = dynamoDB.getTable(TABLE_NAME);
 
             ObjectMapper objectMapper = new ObjectMapper();
             EventRequest eventRequest = objectMapper.readValue(request.getBody(), EventRequest.class);
 
             String id = UUID.randomUUID().toString();
-			/*String principalId = String.valueOf(eventRequest.getPrincipalId());
-			String body = objectMapper.writeValueAsString(eventRequest.getContent());*/
 			String createAt = Instant.now().toString();
 
-			/*Map<String, AttributeValue> item = new HashMap<>();
-			item.put("id", new AttributeValue(id));
-            item.put("principalId", new AttributeValue(principalId));
-            item.put("body", new AttributeValue(body));
-            item.put("createdAt", new AttributeValue(createAt));*/
-
             Item item = new Item()
-                    .withPrimaryKey("id", id)
-                    .withNumber("principalId", eventRequest.getPrincipalId())
-                    .withMap("body", eventRequest.getContent())
-                    .withString("createdAt", createAt);
-            logger.log("Item: " + item.toString());
+                    .withPrimaryKey(ITEM_ID_ATTR, id)
+                    .withNumber(ITEM_PRINCIPAL_ID_ATTR, eventRequest.getPrincipalId())
+                    .withMap(ITEM_BODY_ATTR, eventRequest.getContent())
+                    .withString(ITEM_CREATE_AT_ATTR, createAt);
             PutItemOutcome outcome = table.putItem(item);
-            logger.log("Outcome item: " + outcome);
-
-            /*PutItemRequest putItemRequest = new PutItemRequest("Events", item);
-            PutItemResult putItemResult = ddb.putItem(putItemRequest);*/
-
-            /*EventResponse eventResponse = new EventResponse();
-            eventResponse.setId(id);
-            eventResponse.setPrincipalId(eventRequest.getPrincipalId());
-            eventResponse.setBody(eventRequest.getContent());
-            eventResponse.setCreatedAt(createAt);*/
 
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(201)
-                    /*.withBody(objectMapper.writeValueAsString(eventResponse));*/
                     .withBody(objectMapper.writeValueAsString(outcome));
         } catch (Exception e) {
             logger.log("Exception: " + e.getMessage());
