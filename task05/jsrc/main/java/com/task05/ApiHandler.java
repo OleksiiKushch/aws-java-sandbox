@@ -32,9 +32,8 @@ import com.task05.EventResponse;
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        LambdaLogger logger = context.getLogger();
         try {
-            LambdaLogger logger = context.getLogger();
-
             AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
             DynamoDB dynamoDB = new DynamoDB(client);
             Table table = dynamoDB.getTable("Events");
