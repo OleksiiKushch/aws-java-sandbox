@@ -31,7 +31,7 @@ import com.task05.EventResponse;
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         try {
             LambdaLogger logger = context.getLogger();
 
@@ -39,10 +39,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
             DynamoDB dynamoDB = new DynamoDB(client);
             Table table = dynamoDB.getTable("Events");
 
-            logger.log(UUID.randomUUID().toString());
             ObjectMapper objectMapper = new ObjectMapper();
-            logger.log(input.getBody());
-            EventRequest eventRequest = objectMapper.readValue(input.getBody(), EventRequest.class);
+            logger.log("Body: " + request.getBody());
+            EventRequest eventRequest = objectMapper.readValue(request.getBody(), EventRequest.class);
 
             String id = UUID.randomUUID().toString();
 			/*String principalId = String.valueOf(eventRequest.getPrincipalId());
