@@ -40,14 +40,12 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
             Table table = dynamoDB.getTable("Events");
 
             ObjectMapper objectMapper = new ObjectMapper();
-            logger.log("Body: " + request.getBody());
             EventRequest eventRequest = objectMapper.readValue(request.getBody(), EventRequest.class);
 
             String id = UUID.randomUUID().toString();
 			/*String principalId = String.valueOf(eventRequest.getPrincipalId());
 			String body = objectMapper.writeValueAsString(eventRequest.getContent());*/
 			String createAt = Instant.now().toString();
-            logger.log(id + ", " + createAt + ", " + eventRequest.getPrincipalId() + ", " + eventRequest.getContent());
 
 			/*Map<String, AttributeValue> item = new HashMap<>();
 			item.put("id", new AttributeValue(id));
@@ -60,8 +58,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
                     .withNumber("principalId", eventRequest.getPrincipalId())
                     .withMap("body", eventRequest.getContent())
                     .withString("createdAt", createAt);
-            logger.log(item.toString());
+            logger.log("Item: " + item.toString());
             PutItemOutcome outcome = table.putItem(item);
+            logger.log("Outcome item: " + outcome);
 
             /*PutItemRequest putItemRequest = new PutItemRequest("Events", item);
             PutItemResult putItemResult = ddb.putItem(putItemRequest);*/
@@ -77,6 +76,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
                     /*.withBody(objectMapper.writeValueAsString(eventResponse));*/
                     .withBody(objectMapper.writeValueAsString(outcome));
         } catch (Exception e) {
+            logger.log("Exception: " + e.getMessage());
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(500)
                     .withBody("An error occurred: " + e.getMessage());
