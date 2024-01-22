@@ -12,6 +12,8 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syndicate.deployment.annotations.events.DynamoDbTriggerEventSource;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 
@@ -62,7 +64,14 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
                                 new AttributeValue().withS(Instant.now().toString()));
 
                 if (eventType.equals("INSERT")) {
-                    putItemRequest.addItemEntry("newValue", newImageData);
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String newImageDataAsString = null;
+                    try {
+                        newImageDataAsString = objectMapper.writeValueAsString(newImageData);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                    putItemRequest.addItemEntry("newValue", new AttributeValue().withS(newImageDataAsString));
                 } else if (eventType.equals("MODIFY")) {
                     putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
                     putItemRequest.addItemEntry("newValue", newImageData.get("value"));
