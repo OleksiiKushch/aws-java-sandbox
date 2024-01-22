@@ -38,15 +38,19 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
 
 		AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
 
+		logger.log("ddbEvent: " + ddbEvent);
+		logger.log("ddbEvent records: " + ddbEvent.getRecords());
 		for (DynamodbEvent.DynamodbStreamRecord record : ddbEvent.getRecords()){
 			if (record == null) {
 				continue;
 			}
 			String eventType = record.getEventName();
-
+			logger.log("record event name (type): " + record.getEventName());
 			if(eventType != null && eventType.equals("INSERT") || eventType.equals("MODIFY")) {
 				Map<String, AttributeValue> newImageData = record.getDynamodb().getNewImage();
+				logger.log("newImageData: " + newImageData);
 				Map<String, AttributeValue> oldImageData = record.getDynamodb().getOldImage();
+				logger.log("oldImageData: " + oldImageData);
 
 				PutItemRequest putItemRequest = new PutItemRequest();
 				putItemRequest.withTableName("Audit")
