@@ -14,11 +14,15 @@ import java.util.Map;
 )
 public class HelloWorld implements RequestHandler<Object, Map<String, Object>> {
 
+	private static final String STATUS_CODE_ATTR = "statusCode";
+	private static final String MESSAGE_ATTR = "message";
+	private static final int SUCCESS_HTTP_STATUS = 200;
+	private static final String MESSAGE = "Hello from Lambda";
+
 	public Map<String, Object> handleRequest(Object request, Context context) {
-		System.out.println("Hello from lambda");
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		resultMap.put("statusCode", 200);
-		resultMap.put("message", "Hello from Lambda");
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put(STATUS_CODE_ATTR, SUCCESS_HTTP_STATUS);
+		resultMap.put(MESSAGE_ATTR, MESSAGE);
 		return resultMap;
 	}
 }

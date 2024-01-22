@@ -8,24 +8,15 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
-import com.amazonaws.services.dynamodbv2.model.PutItemResult;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.regions.Regions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.time.Instant;
-
-import com.task05.EventRequest;
-import com.task05.EventResponse;
 
 @LambdaHandler(lambdaName = "api_handler",
         roleName = "api_handler-role"
@@ -35,6 +26,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
     private static final String PREFIX = "cmtr-4df2c6a7-";
     private static final String SUFFIX = "-test";
     private static final String TABLE_NAME = PREFIX + "Events" + SUFFIX;
+    private static final int SUCCESS_CREATING_HTTP_CODE = 201;
+    private static final int SERVER_ERROR_HTTP_CODE = 500;
     private static final String ITEM_ID_ATTR = "id";
     private static final String ITEM_PRINCIPAL_ID_ATTR = "principalId";
     private static final String ITEM_BODY_ATTR = "body";
@@ -43,9 +36,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         LambdaLogger logger = context.getLogger();
         try {
-            AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
-                    .withRegion(Regions.EU_CENTRAL_1)
-                    .build();
+            AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
             DynamoDB dynamoDB = new DynamoDB(client);
             Table table = dynamoDB.getTable(TABLE_NAME);
 
@@ -63,12 +54,12 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
             PutItemOutcome outcome = table.putItem(item);
 
             return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(201)
+                    .withStatusCode(SUCCESS_CREATING_HTTP_CODE)
                     .withBody(objectMapper.writeValueAsString(outcome));
         } catch (Exception e) {
             logger.log("Exception: " + e.getMessage());
             return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(500)
+                    .withStatusCode(SERVER_ERROR_HTTP_CODE)
                     .withBody("An error occurred: " + e.getMessage());
         }
     }

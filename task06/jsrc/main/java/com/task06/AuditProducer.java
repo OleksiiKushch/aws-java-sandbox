@@ -6,20 +6,14 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syndicate.deployment.annotations.events.DynamoDbTriggerEventSource;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,48 +30,45 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
     private static final String PREFIX = "cmtr-4df2c6a7-";
     private static final String SUFFIX = "-test";
     private static final String TABLE_NAME = PREFIX + "Audit" + SUFFIX;
+    private static final String INSERT_EVENT_TYPE = "INSERT";
+    private static final String MODIFY_EVENT_TYPE = "MODIFY";
+    private static final String ID_ATTR = "id";
+    private static final String ITEM_KEY_ATTR = "itemKey";
+    private static final String MODIFICATION_TIME_ATTR = "modificationTime";
+    private static final String NEW_VALUE_ATTR = "newValue";
+    private static final String OLD_VALUE_ATTR = "oldValue";
+    private static final String UPDATED_ATTR = "updatedAttribute";
+    private static final String KEY_ATTR = "key";
+    private static final String VALUE_ATTR = "value";
+
 
     public Void handleRequest(DynamodbEvent ddbEvent, Context context) {
-        LambdaLogger logger = context.getLogger();
-
-        AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
-
-        logger.log("ddbEvent: " + ddbEvent);
-        logger.log("ddbEvent records: " + ddbEvent.getRecords());
         for (DynamodbEvent.DynamodbStreamRecord record : ddbEvent.getRecords()) {
-            if (record == null) {
+            if (Objects.isNull(record)) {
                 continue;
             }
             String eventType = record.getEventName();
-            logger.log("record event name (type): " + record.getEventName());
-            if (eventType != null && eventType.equals("INSERT") || eventType.equals("MODIFY")) {
+            if (INSERT_EVENT_TYPE.equals(eventType) || MODIFY_EVENT_TYPE.equals(eventType)) {
                 Map<String, AttributeValue> newImageData = record.getDynamodb().getNewImage();
-                logger.log("newImageData: " + newImageData);
                 Map<String, AttributeValue> oldImageData = record.getDynamodb().getOldImage();
-                logger.log("oldImageData: " + oldImageData);
 
                 PutItemRequest putItemRequest = new PutItemRequest();
                 putItemRequest.withTableName(TABLE_NAME)
-                        .addItemEntry("id",
-                                new AttributeValue().withS(UUID.randomUUID().toString()))
-                        .addItemEntry("itemKey",
-                                new AttributeValue().withS(newImageData.get("key").getS()))
-                        .addItemEntry("modificationTime",
-                                new AttributeValue().withS(Instant.now().toString()));
+                        .addItemEntry(ID_ATTR, new AttributeValue().withS(UUID.randomUUID().toString()))
+                        .addItemEntry(ITEM_KEY_ATTR, new AttributeValue().withS(newImageData.get(KEY_ATTR).getS()))
+                        .addItemEntry(MODIFICATION_TIME_ATTR, new AttributeValue().withS(Instant.now().toString()));
 
-                if (eventType.equals("INSERT")) {
+                if (eventType.equals(INSERT_EVENT_TYPE)) {
                     Map<String, AttributeValue> newValueMap = newImageData.entrySet().stream()
-                            .collect(Collectors.toMap(Map.Entry::getKey,
-                                    entry -> new AttributeValue(entry.getValue().getS())));
+                            .collect(Collectors.toMap(Map.Entry::getKey, entry -> new AttributeValue(entry.getValue().getS())));
 
-                    logger.log("newImageDataAsString: " + newValueMap);
-                    putItemRequest.addItemEntry("newValue", new AttributeValue().withM(newValueMap));
-                } else if (eventType.equals("MODIFY")) {
-                    putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
-                    putItemRequest.addItemEntry("newValue", newImageData.get("value"));
-                    putItemRequest.addItemEntry("updatedAttribute", new AttributeValue().withS("value"));
+                    putItemRequest.addItemEntry(NEW_VALUE_ATTR, new AttributeValue().withM(newValueMap));
+                } else {
+                    putItemRequest.addItemEntry(OLD_VALUE_ATTR, oldImageData.get(VALUE_ATTR));
+                    putItemRequest.addItemEntry(NEW_VALUE_ATTR, newImageData.get(VALUE_ATTR));
+                    putItemRequest.addItemEntry(UPDATED_ATTR, new AttributeValue().withS(VALUE_ATTR));
                 }
-				logger.log("putItemRequest: " + putItemRequest);
+                AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
                 ddb.putItem(putItemRequest);
             }
         }

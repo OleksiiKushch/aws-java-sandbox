@@ -11,8 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @LambdaHandler(lambdaName = "hello_world",
-	roleName = "hello_world-role",
-	isPublishVersion = true
+	roleName = "hello_world-role"
 )
 @LambdaUrlConfig(
 		authType = AuthType.NONE,
@@ -20,11 +19,15 @@ import java.util.Map;
 )
 public class HelloWorld implements RequestHandler<Object, Map<String, Object>> {
 
+	private static final String STATUS_CODE_ATTR = "statusCode";
+	private static final String BODY_ATTR = "body";
+	private static final int SUCCESS_HTTP_STATUS = 200;
+	private static final String BODY_CONTENT = "{'statusCode': 200, 'message': 'Hello from Lambda'}";
+
 	public Map<String, Object> handleRequest(Object request, Context context) {
-		System.out.println("Hello from lambda");
-		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("statusCode", 200);
-		response.put("body", "{'statusCode': 200, 'message': 'Hello from Lambda'}");
+		Map<String, Object> response = new HashMap<>();
+		response.put(STATUS_CODE_ATTR, SUCCESS_HTTP_STATUS);
+		response.put(BODY_ATTR, BODY_CONTENT);
 		return response;
 	}
 }
