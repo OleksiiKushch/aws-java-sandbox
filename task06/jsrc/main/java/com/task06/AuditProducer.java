@@ -12,6 +12,7 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syndicate.deployment.annotations.events.DynamoDbTriggerEventSource;
@@ -20,6 +21,7 @@ import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @LambdaHandler(lambdaName = "audit_producer",
         roleName = "audit_producer-role",
@@ -65,9 +67,13 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
 
                 if (eventType.equals("INSERT")) {
                     ObjectMapper objectMapper = new ObjectMapper();
+                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                    Map<String, Object> simpleMap = newImageData.entrySet().stream()
+                            .collect(Collectors.toMap(Map.Entry::getKey,
+                                    entry -> entry.getValue().getS()));
                     String newImageDataAsString = null;
                     try {
-                        newImageDataAsString = objectMapper.writeValueAsString(newImageData);
+                        newImageDataAsString = objectMapper.writeValueAsString(simpleMap);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
