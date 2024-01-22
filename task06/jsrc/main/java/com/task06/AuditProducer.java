@@ -20,58 +20,58 @@ import java.util.Map;
 import java.util.UUID;
 
 @LambdaHandler(lambdaName = "audit_producer",
-	roleName = "audit_producer-role",
-		timeout = 20
+        roleName = "audit_producer-role",
+        timeout = 20
 )
 @DynamoDbTriggerEventSource(
-		targetTable = "Configuration",
-		batchSize = 10
+        targetTable = "Configuration",
+        batchSize = 10
 )
 public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
 
-	private static final String PREFIX = "cmtr-4df2c6a7-";
-	private static final String SUFFIX = "-test";
-	private static final String TABLE_NAME = PREFIX + "Audit" + SUFFIX;
+    private static final String PREFIX = "cmtr-4df2c6a7-";
+    private static final String SUFFIX = "-test";
+    private static final String TABLE_NAME = PREFIX + "Audit" + SUFFIX;
 
-	public Void handleRequest(DynamodbEvent ddbEvent, Context context) {
-		LambdaLogger logger = context.getLogger();
+    public Void handleRequest(DynamodbEvent ddbEvent, Context context) {
+        LambdaLogger logger = context.getLogger();
 
-		AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
+        AmazonDynamoDB ddb = AmazonDynamoDBClientBuilder.defaultClient();
 
-		logger.log("ddbEvent: " + ddbEvent);
-		logger.log("ddbEvent records: " + ddbEvent.getRecords());
-		for (DynamodbEvent.DynamodbStreamRecord record : ddbEvent.getRecords()){
-			if (record == null) {
-				continue;
-			}
-			String eventType = record.getEventName();
-			logger.log("record event name (type): " + record.getEventName());
-			if(eventType != null && eventType.equals("INSERT") || eventType.equals("MODIFY")) {
-				Map<String, AttributeValue> newImageData = record.getDynamodb().getNewImage();
-				logger.log("newImageData: " + newImageData);
-				Map<String, AttributeValue> oldImageData = record.getDynamodb().getOldImage();
-				logger.log("oldImageData: " + oldImageData);
+        logger.log("ddbEvent: " + ddbEvent);
+        logger.log("ddbEvent records: " + ddbEvent.getRecords());
+        for (DynamodbEvent.DynamodbStreamRecord record : ddbEvent.getRecords()) {
+            if (record == null) {
+                continue;
+            }
+            String eventType = record.getEventName();
+            logger.log("record event name (type): " + record.getEventName());
+            if (eventType != null && eventType.equals("INSERT") || eventType.equals("MODIFY")) {
+                Map<String, AttributeValue> newImageData = record.getDynamodb().getNewImage();
+                logger.log("newImageData: " + newImageData);
+                Map<String, AttributeValue> oldImageData = record.getDynamodb().getOldImage();
+                logger.log("oldImageData: " + oldImageData);
 
-				PutItemRequest putItemRequest = new PutItemRequest();
-				putItemRequest.withTableName("Audit")
-						.addItemEntry("id",
-								new AttributeValue().withS(UUID.randomUUID().toString()))
-						.addItemEntry("itemKey",
-								new AttributeValue().withS(newImageData.get("key").getS()))
-						.addItemEntry("modificationTime",
-								new AttributeValue().withS(Instant.now().toString()));
+                PutItemRequest putItemRequest = new PutItemRequest();
+                putItemRequest.withTableName(TABLE_NAME)
+                        .addItemEntry("id",
+                                new AttributeValue().withS(UUID.randomUUID().toString()))
+                        .addItemEntry("itemKey",
+                                new AttributeValue().withS(newImageData.get("key").getS()))
+                        .addItemEntry("modificationTime",
+                                new AttributeValue().withS(Instant.now().toString()));
 
-				if(eventType.equals("INSERT")){
-					putItemRequest.addItemEntry("newValue", newImageData.get("value"));
-				} else if(eventType.equals("MODIFY")){
-					putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
-					putItemRequest.addItemEntry("newValue", newImageData.get("value"));
-					putItemRequest.addItemEntry("updatedAttribute",
-							new AttributeValue().withS("value"));
-				}
-				ddb.putItem(putItemRequest);
-			}
-		}
-		return null;
-	}
+                if (eventType.equals("INSERT")) {
+                    putItemRequest.addItemEntry("newValue", newImageData.get("value"));
+                } else if (eventType.equals("MODIFY")) {
+                    putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
+                    putItemRequest.addItemEntry("newValue", newImageData.get("value"));
+                    putItemRequest.addItemEntry("updatedAttribute",
+                            new AttributeValue().withS("value"));
+                }
+                ddb.putItem(putItemRequest);
+            }
+        }
+        return null;
+    }
 }
