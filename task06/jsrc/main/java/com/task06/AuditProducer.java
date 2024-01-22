@@ -20,7 +20,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @LambdaHandler(lambdaName = "audit_producer",
-	roleName = "audit_producer-role"
+	roleName = "audit_producer-role",
+		timeout = 20
 )
 @DynamoDbTriggerEventSource(
 		targetTable = "Configuration",
