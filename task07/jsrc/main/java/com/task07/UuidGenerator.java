@@ -29,8 +29,8 @@ public class UuidGenerator implements RequestHandler<Object, Void> {
     private static final String SUFFIX = "-test";
     private static final String BACKET_NAME = PREFIX + "uuid-storage" + SUFFIX;
 	private static final int NUMBER_OF_UUIDS = 10;
-    private static final Stirng SUCCESS_MESSAGE = NUMBER_OF_UUIDS + " UUIDs successfully stored in S3 bucket";
-    private static final Stirng IDS_ATTR = "ids";
+    private static final String SUCCESS_MESSAGE = NUMBER_OF_UUIDS + " UUIDs successfully stored in S3 bucket";
+    private static final String IDS_ATTR = "ids";
 
     public Void handleRequest(Object request, Context context) {
         List<String> uuids = new ArrayList<>();
