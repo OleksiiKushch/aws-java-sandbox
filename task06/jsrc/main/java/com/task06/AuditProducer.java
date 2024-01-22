@@ -66,19 +66,12 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
                                 new AttributeValue().withS(Instant.now().toString()));
 
                 if (eventType.equals("INSERT")) {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                    Map<String, Object> simpleMap = newImageData.entrySet().stream()
+                    Map<String, AttributeValue> newValueMap = newImageData.entrySet().stream()
                             .collect(Collectors.toMap(Map.Entry::getKey,
-                                    entry -> entry.getValue().getS()));
-                    String newImageDataAsString = null;
-                    try {
-                        newImageDataAsString = objectMapper.writeValueAsString(simpleMap);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                    logger.log("newImageDataAsString: " + newImageDataAsString);
-                    putItemRequest.addItemEntry("newValue", new AttributeValue().withS(newImageDataAsString));
+                                    entry -> new AttributeValue(entry.getValue().getS())));
+
+                    logger.log("newImageDataAsString: " + newValueMap);
+                    putItemRequest.addItemEntry("newValue", new AttributeValue().withM(newValueMap));
                 } else if (eventType.equals("MODIFY")) {
                     putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
                     putItemRequest.addItemEntry("newValue", newImageData.get("value"));
