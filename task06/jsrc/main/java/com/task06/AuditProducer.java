@@ -69,6 +69,7 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
                     putItemRequest.addItemEntry("updatedAttribute",
                             new AttributeValue().withS("value"));
                 }
+				logger.log("putItemRequest: " + putItemRequest);
                 ddb.putItem(putItemRequest);
             }
         }
