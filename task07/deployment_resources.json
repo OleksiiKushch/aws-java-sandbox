@@ -53,6 +53,6 @@
   "uuid_trigger": {
     "resource_type": "cloudwatch_rule",
     "rule_type": "schedule",
-    "expression": "* * * * *"
+    "expression": "rate(1 minute)"
   }
 }
