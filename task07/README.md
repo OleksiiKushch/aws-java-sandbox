@@ -50,4 +50,8 @@ Lambda feature overview.
 ### Commands
 1) syndicate generate project --name task07 && cd task07
 2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
-3) 
+3) syndicate generate lambda --name uuid_generator --runtime java
+4) syndicate generate meta s3_bucket --resource_name uuid-storage
+5) syndicate generate meta cloudwatch_event_rule --resource_name uuid_trigger --rule_type schedule --expression "rate(1 minute)"
+
+Note: rate(1 minute) or cron(* * * * *)

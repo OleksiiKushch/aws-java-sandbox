@@ -17,43 +17,46 @@ import java.time.Instant;
 import java.util.*;
 
 @LambdaHandler(
-		lambdaName = "uuid_generator",
-		roleName = "uuid_generator-role"
+        lambdaName = "uuid_generator",
+        roleName = "uuid_generator-role"
 )
 @RuleEventSource(
-		targetRule = "uuid_trigger"
+        targetRule = "uuid_trigger"
 )
-public class UuidGenerator implements RequestHandler<Object, String> {
+public class UuidGenerator implements RequestHandler<Object, Void> {
 
-	private static final String PREFIX = "cmtr-4df2c6a7-";
-	private static final String SUFFIX = "-test";
-	private static final String BACKET_NAME = PREFIX + "uuid-storage" + SUFFIX;
+    private static final String PREFIX = "cmtr-4df2c6a7-";
+    private static final String SUFFIX = "-test";
+    private static final String BACKET_NAME = PREFIX + "uuid-storage" + SUFFIX;
+	private static final int NUMBER_OF_UUIDS = 10;
+    private static final Stirng SUCCESS_MESSAGE = NUMBER_OF_UUIDS + " UUIDs successfully stored in S3 bucket";
+    private static final Stirng IDS_ATTR = "ids";
 
-	public String handleRequest(Object request, Context context) {
-		List<String> uuids = new ArrayList<>();
-		for(int i=0; i<10; i++) {
-			uuids.add(UUID.randomUUID().toString());
-		}
+    public Void handleRequest(Object request, Context context) {
+        List<String> uuids = new ArrayList<>();
+        for (int i = 0; i < NUMBER_OF_UUIDS; i++) {
+            uuids.add(UUID.randomUUID().toString());
+        }
 
-		Map<String, Object> data = new HashMap<>();
-		data.put("ids", uuids);
-		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-		String jsonResul = "";
-		try {
-			jsonResul = ow.writeValueAsString(data);
-		} catch (JsonProcessingException exception) {
-			context.getLogger().log("Exception: " + exception.getMessage());
-		}
+        Map<String, Object> data = new HashMap<>();
+        data.put(IDS_ATTR, uuids);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String jsonResul = "";
+        try {
+            jsonResul = ow.writeValueAsString(data);
+        } catch (JsonProcessingException exception) {
+            context.getLogger().log("Exception: " + exception.getMessage());
+        }
 
-		try {
-			AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
-			InputStream stream = new StringInputStream(jsonResul);
-			ObjectMetadata meta = new ObjectMetadata();
-			s3Client.putObject(BACKET_NAME, Instant.now().toString(), stream, meta);
-		} catch(Exception exception) {
-			context.getLogger().log("Exception: " + exception.getMessage());
-		}
-		context.getLogger().log("10 UUIDs successfully stored in S3 bucket");
-		return "10 UUIDs successfully stored in S3 bucket";
-	}
+        try {
+            AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+            InputStream stream = new StringInputStream(jsonResul);
+            ObjectMetadata meta = new ObjectMetadata();
+            s3Client.putObject(BACKET_NAME, Instant.now().toString(), stream, meta);
+        } catch (Exception exception) {
+            context.getLogger().log("Exception: " + exception.getMessage());
+        }
+        context.getLogger().log(SUCCESS_MESSAGE);
+        return null;
+    }
 }
