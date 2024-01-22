@@ -1,4 +1,4 @@
-# task06
+# task07
 
 High level project overview - business value it brings, non-detailed technical overview.
 
@@ -7,9 +7,9 @@ All the technical details described below are actual for the particular
 version, or a range of versions of the software.
 ### Actual for versions: 1.0.0
 
-## task06 diagram
+## task07 diagram
 
-![task06](pics/task06_diagram.png)
+![task07](pics/task07_diagram.png)
 
 ## Lambdas descriptions
 
@@ -48,8 +48,6 @@ Lambda feature overview.
 ## My steps
 
 ### Commands
-1) syndicate generate project --name task06 && cd task06
+1) syndicate generate project --name task07 && cd task07
 2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
-3) syndicate generate lambda --name audit_producer --runtime java
-4) syndicate generate meta dynamodb --resource_name Configuration --hash_key_name key --hash_key_type S
-5) syndicate generate meta dynamodb --resource_name Audit --hash_key_name id --hash_key_type S
+3) 
