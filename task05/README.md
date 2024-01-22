@@ -55,4 +55,4 @@ Lambda feature overview.
 5) syndicate generate meta api_gateway_resource --api_name task5_api --path /events
 6) syndicate generate meta api_gateway_resource_method --api_name task5_api --path /events --method POST --integration_type lambda --lambda_name api_handler
 7) add `"enable_proxy": true,` for `task5_api` in `deployment_resources.json` file
-8syndicate generate meta dynamodb --resource_name Events --hash_key_name id --hash_key_type S
+8) syndicate generate meta dynamodb --resource_name Events --hash_key_name id --hash_key_type S

@@ -10,3 +10,8 @@ aws iam attach-role-policy --role-name ${role} --policy-arn arn:aws:iam::aws:pol
 
 # Prohibit deletion of any objects inside some bucket
 aws iam put-role-policy --role-name ${role} --policy-name DenyDeleteObjectsInMyBucket --policy-document file://policy-task2.json
+
+or 
+
+# Add responsive policy for S3 bucket
+aws s3api put-bucket-policy --bucket ${bucket} --policy file://bucket-policy.json
