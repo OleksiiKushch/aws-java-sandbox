@@ -62,12 +62,11 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
                                 new AttributeValue().withS(Instant.now().toString()));
 
                 if (eventType.equals("INSERT")) {
-                    putItemRequest.addItemEntry("newValue", newImageData.get("value"));
+                    putItemRequest.addItemEntry("newValue", newImageData);
                 } else if (eventType.equals("MODIFY")) {
                     putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
                     putItemRequest.addItemEntry("newValue", newImageData.get("value"));
-                    putItemRequest.addItemEntry("updatedAttribute",
-                            new AttributeValue().withS("value"));
+                    putItemRequest.addItemEntry("updatedAttribute", new AttributeValue().withS("value"));
                 }
 				logger.log("putItemRequest: " + putItemRequest);
                 ddb.putItem(putItemRequest);
