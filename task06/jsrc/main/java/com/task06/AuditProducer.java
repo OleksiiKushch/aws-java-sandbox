@@ -71,6 +71,7 @@ public class AuditProducer implements RequestHandler<DynamodbEvent, Void> {
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
+                    logger.log("newImageDataAsString: " + newImageDataAsString);
                     putItemRequest.addItemEntry("newValue", new AttributeValue().withS(newImageDataAsString));
                 } else if (eventType.equals("MODIFY")) {
                     putItemRequest.addItemEntry("oldValue", oldImageData.get("value"));
