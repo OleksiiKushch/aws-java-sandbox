@@ -5,3 +5,4 @@ target/
 bundles/
 .idea/
 */.gitignore
+.syndicate-config-personal-development-account
