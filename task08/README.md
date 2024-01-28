@@ -45,3 +45,9 @@ Lambda feature overview.
 2. action 2
 ...
 
+## My steps
+
+### Commands
+1) syndicate generate project --name task08 && cd task08
+2) syndicate generate config --name "personal-development-account" --region "eu-central-1" --bundle_bucket_name "syndicate-artefacts-MY_ACCOUNT_ID-eucentral1" --access_key "MY_ACCESS_KEY" --secret_key "MY_SECRET_KEY"
+3) syndicate generate lambda --name api_handler --runtime java
