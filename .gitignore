@@ -3,3 +3,5 @@ logs/
 MY_SECRET.md
 target/
 bundles/
+.idea/
+*/.gitignore

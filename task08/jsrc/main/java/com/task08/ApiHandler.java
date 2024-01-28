@@ -30,9 +30,9 @@ import java.util.Map;
 		authType = AuthType.NONE,
 		invokeMode = InvokeMode.BUFFERED
 )
-public class ApiHandler implements RequestHandler<Object, Map<String, Object>> {
+public class ApiHandler implements RequestHandler<Object, String> {
 
-	public Map<String, Object> handleRequest(Object request, Context context) {
+	public String handleRequest(Object request, Context context) {
 		OpenMeteoApi publicApi = new OpenMeteoApi();
 		String strRequest = publicApi.getLatestWeatherForecast();
 		return strRequest;
