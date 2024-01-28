@@ -30,6 +30,14 @@
             <artifactId>deployment-configuration-annotations</artifactId>
             <version>${deployment-configuration-annotations.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.my.meteo</groupId>
+            <artifactId>my-meteo-api</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/my-meteo-api.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>
