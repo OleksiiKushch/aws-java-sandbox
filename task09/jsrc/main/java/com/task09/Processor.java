@@ -34,19 +34,24 @@ public class Processor implements RequestHandler<Object, String> {
 	private static final String CURRENT_ATTR = "current=temperature_2m,wind_speed_10m";
 	private static final String HOURLY_ATTR = "hourly=temperature_2m,relative_humidity_2m,wind_speed_10m";
 
-	private static final String TABLE_NAME = "Weather";
+	private static final String RESOURCE_PREFIX = "cmtr-4df2c6a7-";
+	private static final String RESOURCE_SUFFIX = "-test";
+	private static final String TABLE_NAME = RESOURCE_PREFIX + "Weather" + RESOURCE_SUFFIX;
 
 	public String handleRequest(Object request, Context context) {
 		try {
 			String response = getLatestWeatherForecast();
+			context.getLogger().log("Responce: " + response);
 
 			Gson gson = new Gson();
 			Type type = new TypeToken<Map<String, Object>>() {}.getType();
 			Map<String, Object> inputMap = gson.fromJson(response, type);
+			context.getLogger().log("Input map (resource): " + inputMap);
 
 			Map<String, AttributeValue> item = new HashMap<>();
 			item.put("id", new AttributeValue(UUID.randomUUID().toString()));
 			item.put("forecast", new AttributeValue().withM(convertToDynamoDBMap(inputMap)));
+			context.getLogger().log("Item: " + item);
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
 			dynamoDb.putItem(TABLE_NAME, item);
