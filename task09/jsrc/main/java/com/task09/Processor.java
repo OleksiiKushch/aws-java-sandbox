@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.syndicate.deployment.annotations.LambdaUrlConfig;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
+import com.syndicate.deployment.model.TracingMode;
 import com.syndicate.deployment.model.lambda.url.AuthType;
 import com.syndicate.deployment.model.lambda.url.InvokeMode;
 
@@ -20,7 +21,8 @@ import java.util.*;
 
 @LambdaHandler(
 		lambdaName = "processor",
-		roleName = "processor-role"
+		roleName = "processor-role",
+		tracingMode = TracingMode.Active
 )
 @LambdaUrlConfig(
 		authType = AuthType.NONE,
