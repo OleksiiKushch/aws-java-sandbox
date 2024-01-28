@@ -34,9 +34,9 @@
         <dependency>
             <groupId>com.my.meteo</groupId>
             <artifactId>my-meteo-api</artifactId>
-            <version>1.0</version>
+            <version>1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/my-meteo-api.jar</systemPath>
+            <systemPath>${basedir}/lib/my-meteo-api.jar</systemPath>
         </dependency>
     </dependencies>
 
