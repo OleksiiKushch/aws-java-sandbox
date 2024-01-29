@@ -22,7 +22,7 @@ import java.util.*;
 @LambdaHandler(
 		lambdaName = "processor",
 		roleName = "processor-role",
-		tracingMode = TracingMode.Active
+		tracingMode = TracingMode.PassThrough
 )
 @LambdaUrlConfig(
 		authType = AuthType.NONE,
