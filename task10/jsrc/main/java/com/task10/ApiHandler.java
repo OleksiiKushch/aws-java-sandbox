@@ -63,8 +63,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String password = (String) body.get("password");
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
+		context.getLogger().log("Cognito id: " + cognitoId);
 		AdminCreateUserResponse result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
-				.userPoolId(COGNITO_NAME)
+				.userPoolId(cognitoId)
 				.username(email)
 				.temporaryPassword(password)
 				.userAttributes(
@@ -287,5 +289,16 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 		context.getLogger().log("Response: " + response);
 		return response;
+	}
+
+	private String getCognitoIdByName(String name, CognitoIdentityProviderClient client) {
+		ListUserPoolsResponse listUserPoolsResponse = client.listUserPools(ListUserPoolsRequest.builder().build());
+		List<UserPoolDescriptionType> userPools = listUserPoolsResponse.userPools();
+		for (UserPoolDescriptionType userPool : userPools) {
+			if (name.equals(userPool.name())) {
+				return userPool.id();
+			}
+		}
+		return null;
 	}
 }
