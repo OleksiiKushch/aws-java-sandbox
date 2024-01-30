@@ -77,8 +77,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				)
 				.messageAction(MessageActionType.SUPPRESS)
 				.build());
-
-		return formSuccessResponse(result, context);
+		context.getLogger().log("Result: " + result);
+		return formSuccessResponse(result.toString(), context);
 	}
 
 	private APIGatewayProxyResponseEvent handleSignIn(APIGatewayProxyRequestEvent event, Context context) {
