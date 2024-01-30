@@ -27,6 +27,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private static final String TABLES_TABLE_NAME = RESOURCE_PROFIX + "Tables" + RESOURCE_SUFFIX;
 	private static final String RESERVATIONS_TABLE_NAME = RESOURCE_PROFIX + "Reservations" + RESOURCE_SUFFIX;
+	private static final String COGNITO_NAME = RESOURCE_PROFIX + "simple-booking-userpool" + RESOURCE_SUFFIX;
 
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 		String path = event.getPath();
@@ -63,7 +64,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 		AdminCreateUserResponse result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
-//				.userPoolId("YourCognitoUserPoolId")
+				.userPoolId(COGNITO_NAME)
 				.username(email)
 				.temporaryPassword(password)
 				.userAttributes(
