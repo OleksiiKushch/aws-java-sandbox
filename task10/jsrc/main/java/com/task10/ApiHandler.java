@@ -113,13 +113,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
 		context.getLogger().log("App client: " + appClient);
 		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
+				.clientId(appClient.clientId())
 				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
 				.authParameters(new HashMap<String,String>() {{
 					put("USERNAME", email);
 					put("PASSWORD", password);
 				}})
-				.clientId(appClient.clientId())
 				.build());
+		context.getLogger().log("Auth response: " + authResponse);
+		context.getLogger().log("Auth result: " + authResponse.authenticationResult());
 
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("accessToken", authResponse.authenticationResult().accessToken());
