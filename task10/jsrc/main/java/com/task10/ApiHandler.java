@@ -16,6 +16,8 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import java.io.IOException;
 import java.util.*;
 
+import static com.task10.MyApiHandlerUtils.*;
+
 @LambdaHandler(
 		lambdaName = "api_handler",
 		roleName = "api_handler-role"
@@ -35,15 +37,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		context.getLogger().log("Handle request with path: " + path + ", and http method: " + httpMethod + ";");
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
-		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
-		context.getLogger().log("Cognito id: " + cognitoId);
-		CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
-				.userPoolId(cognitoId)
-				.clientName("task10_app_client_id")
-				.explicitAuthFlows(ExplicitAuthFlowsType.ADMIN_NO_SRP_AUTH)
-				.generateSecret(false)
-				.build());
-		context.getLogger().log("Create user pool client response: " + createUserPoolClientResponse);
+		createUserPoolApiClientIfNotExists(COGNITO_NAME, cognitoClient, context);
 
 		switch(path) {
 			case "/signup":
@@ -73,14 +67,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String email = (String) body.get("email");
 		String password = (String) body.get("password");
 
-		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
-		context.getLogger().log("Cognito id: " + cognitoId);
-		AdminCreateUserResponse result = null;
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		try {
-			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
+			AdminCreateUserResponse creationResult = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
 					.userPoolId(cognitoId)
 					.username(email)
-//					.temporaryPassword(password)
 					.messageAction(MessageActionType.SUPPRESS)
 					.userAttributes(
 							AttributeType.builder().name("email").value(email).build(),
@@ -89,22 +80,22 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 							AttributeType.builder().name("email_verified").value("true").build()
 					)
 					.build());
+			context.getLogger().log("Create admin: " + creationResult);
 
-			cognitoClient.adminSetUserPassword(AdminSetUserPasswordRequest.builder()
-					.userPoolId(cognitoId)
-					.username(email)
-					.password(password)
-					.permanent(true)
-					.build());
+			AdminSetUserPasswordResponse setPasswordResponse = cognitoClient.adminSetUserPassword(AdminSetUserPasswordRequest.builder()
+							.userPoolId(cognitoId)
+							.username(email)
+							.password(password)
+							.permanent(true)
+							.build());
+			context.getLogger().log("Set password response: " + setPasswordResponse);
 		} catch (CognitoIdentityProviderException e) {
 			context.getLogger().log(e.getMessage());
 			return new APIGatewayProxyResponseEvent()
 					.withBody(e.getMessage())
 					.withStatusCode(400);
 		}
-
-		context.getLogger().log("Result: " + result);
-		return formSuccessResponse(result.toString(), context);
+		return formSuccessResponse(null, context);
 	}
 
 	private APIGatewayProxyResponseEvent handleSignIn(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
@@ -112,17 +103,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String email = (String) body.get("email");
 		String password = (String) body.get("password");
 
-		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
-		context.getLogger().log("Cognito id: " + cognitoId);
-		ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
-				.userPoolId(cognitoId)
-				.build());
-		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
-		context.getLogger().log("App client: " + appClient);
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
+		UserPoolClientDescription appClient = getUserPoolApiDesc(cognitoId, cognitoClient, context);
 		Map<String, String> authParameters = new HashMap<>();
 		authParameters.put("USERNAME", email);
 		authParameters.put("PASSWORD", password);
-
 		AdminInitiateAuthResponse authResponse = cognitoClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
 				.userPoolId(cognitoId)
 				.clientId(appClient.clientId())
@@ -313,24 +298,18 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		ObjectMapper mapper = new ObjectMapper();
 		APIGatewayProxyResponseEvent response = null;
 		try {
-			response = new APIGatewayProxyResponseEvent().withBody(mapper.writeValueAsString(responseBody))
-					.withStatusCode(200);
+			if (Objects.nonNull(responseBody)) {
+				response = new APIGatewayProxyResponseEvent().withBody(mapper.writeValueAsString(responseBody))
+						.withStatusCode(200);
+			} else {
+				response = new APIGatewayProxyResponseEvent()
+						.withStatusCode(200);
+			}
 		} catch (JsonProcessingException e) {
 			context.getLogger().log(e.getMessage());
 			throw new RuntimeException(e);
 		}
 		context.getLogger().log("Response: " + response);
 		return response;
-	}
-
-	private String getCognitoIdByName(String name, CognitoIdentityProviderClient client) {
-		ListUserPoolsResponse listUserPoolsResponse = client.listUserPools(ListUserPoolsRequest.builder().build());
-		List<UserPoolDescriptionType> userPools = listUserPoolsResponse.userPools();
-		for (UserPoolDescriptionType userPool : userPools) {
-			if (name.equals(userPool.name())) {
-				return userPool.id();
-			}
-		}
-		return null;
 	}
 }
