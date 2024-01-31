@@ -137,8 +137,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		Map<String, String> headers = event.getHeaders();
 		context.getLogger().log("Request headers: " + headers);
 		try {
+			String accessToken = headers.get("Authorization").split(" ")[1];
+			context.getLogger().log("Access token: " + accessToken);
 			cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(headers.get("accessToken")))
+					.accessToken(accessToken)
 					.build());
 
 			String id = String.valueOf(body.get("id"));
@@ -172,8 +174,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		Map<String, String> headers = event.getHeaders();
 		context.getLogger().log("Request headers: " + headers);
 		try {
-			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(headers.get("accessToken")))
+			String accessToken = headers.get("Authorization").split(" ")[1];
+			context.getLogger().log("Access token: " + accessToken);
+			cognitoClient.getUser(GetUserRequest.builder()
+					.accessToken(accessToken)
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
@@ -229,8 +233,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		Map<String, String> headers = event.getHeaders();
 		context.getLogger().log("Request headers: " + headers);
 		try {
-			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(headers.get("accessToken")))
+			String accessToken = headers.get("Authorization").split(" ")[1];
+			context.getLogger().log("Access token: " + accessToken);
+			cognitoClient.getUser(GetUserRequest.builder()
+					.accessToken(accessToken)
 					.build());
 
 			String reservationId = UUID.randomUUID().toString();
@@ -263,8 +269,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		Map<String, String> headers = event.getHeaders();
 		context.getLogger().log("Request headers: " + headers);
 		try {
-			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(headers.get("accessToken")))
+			String accessToken = headers.get("Authorization").split(" ")[1];
+			context.getLogger().log("Access token: " + accessToken);
+			cognitoClient.getUser(GetUserRequest.builder()
+					.accessToken(accessToken)
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
