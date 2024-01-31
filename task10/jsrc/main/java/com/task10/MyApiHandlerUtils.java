@@ -131,9 +131,10 @@ public class MyApiHandlerUtils {
         return accessToken;
     }
 
-    public static boolean checkIfTableExists(String tableNumber, AmazonDynamoDB dynamoDb) {
+    public static boolean checkIfTableExists(String tableNumber, AmazonDynamoDB dynamoDb, Context context) {
         ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
         List<Map<String, Object>> tables = getAllTables(dynamoDb, scanRequest);
+        context.getLogger().log("Founded tables: " + tables);
         return tables.stream().anyMatch(table -> tableNumber.equals(table.get(TABLE_NUMBER)));
     }
 }

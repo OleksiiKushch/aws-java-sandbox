@@ -201,9 +201,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.build());
 
 			Map<String, AttributeValue> item = new HashMap<>();
-			String tableNumber = String.valueOf(body.get("tableNumber"));
+			String tableNumber = String.valueOf(body.get(RESERVATION_TABLE_NUMBER));
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
-			if (checkIfTableExists(tableNumber, dynamoDb)) {
+			if (checkIfTableExists(tableNumber, dynamoDb, context)) {
 				context.getLogger().log("Table with number: " + tableNumber + " dose not exists.");
 				return new APIGatewayProxyResponseEvent()
 						.withStatusCode(400);
