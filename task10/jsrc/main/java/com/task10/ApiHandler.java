@@ -109,8 +109,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		UserPoolClientDescription appClient = getUserPoolApiDesc(cognitoId, cognitoClient, context);
 		Map<String, String> authParameters = new HashMap<>();
-		authParameters.put("username", email);
-		authParameters.put("password", password);
+		authParameters.put("USERNAME", email);
+		authParameters.put("PASSWORD", password);
 		AdminInitiateAuthResponse authResponse = null;
 		try {
 			authResponse = cognitoClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
