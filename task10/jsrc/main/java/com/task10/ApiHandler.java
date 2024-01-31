@@ -135,6 +135,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private APIGatewayProxyResponseEvent handleCreateTable(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		Map<String, String> headers = event.getHeaders();
+		context.getLogger().log("Request headers: " + headers);
 		try {
 			cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(headers.get("accessToken")))
@@ -169,6 +170,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, String> headers = event.getHeaders();
+		context.getLogger().log("Request headers: " + headers);
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(headers.get("accessToken")))
@@ -225,6 +227,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		Map<String, String> headers = event.getHeaders();
+		context.getLogger().log("Request headers: " + headers);
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(headers.get("accessToken")))
@@ -258,6 +261,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleGetReservations(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, String> headers = event.getHeaders();
+		context.getLogger().log("Request headers: " + headers);
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(headers.get("accessToken")))
