@@ -161,4 +161,8 @@ public class MyApiHandlerUtils {
         List<Map<String, Object>> tables = getAllReservations(dynamoDb, scanRequest);
         return tables.stream().noneMatch(reservation -> tableNumber.equals(String.valueOf(reservation.get(RESERVATION_TABLE_NUMBER))));
     }
+    // TODO:
+    //  I think in the `checkIfTableExists` and `checkIfReservationWithTableIsNotExists` methods, it's better to use the sort key for the `number` field in the `Tables` table,
+    //  and for the `tableNumber` field in the `Reservation` table. Perform searches using these keys instead of performing a full scan (since it's slow).
+    //  However, I'm not sure if it will work or not.
 }
