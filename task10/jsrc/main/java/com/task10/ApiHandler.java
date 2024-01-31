@@ -346,7 +346,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		GetItemRequest request = new GetItemRequest()
 				.withTableName(TABLES_TABLE_NAME)
 				.withKey(key);
-		Map<String, AttributeValue> result = dynamoDb.getItem(request).getItem()
+		Map<String, AttributeValue> result = dynamoDb.getItem(request).getItem();
         return Objects.nonNull(result);
 	}
 }
