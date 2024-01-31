@@ -176,10 +176,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
 
 			Map<String, Object> responseBody = new HashMap<>();
-			context.getLogger().log("Event resource: " + event.getResource());
-			if (event.getResource().equals("/tables/{tableId}")) {
+			Map<String, String> pathParameters = event.getPathParameters();
+			String tableId = pathParameters != null ? pathParameters.get("tableId") : null;
+			if (Objects.isNull(tableId) || tableId.isEmpty()) {
+				responseBody.put("tables", getAllTables(dynamoDb, scanRequest));
+			} else {
+				context.getLogger().log("Handle request with tableId path parameter: " + tableId);
 				Map<String, AttributeValue> keyToGet = new HashMap<>();
-				String tableId = event.getPathParameters().get("tableId");
 				keyToGet.put("id", new AttributeValue(tableId));
 				GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName("Tables");
 				Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
@@ -187,8 +190,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					return new APIGatewayProxyResponseEvent().withBody("No item found for " + tableId).withStatusCode(404);
 				}
 				putTableItemToMap(responseBody, item);
-			} else {
-				responseBody.put("tables", getAllTables(dynamoDb, scanRequest));
 			}
 
 			return formSuccessResponse(responseBody, context);
