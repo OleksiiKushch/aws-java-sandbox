@@ -34,20 +34,30 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String httpMethod = event.getHttpMethod();
 		context.getLogger().log("Handle request with path: " + path + ", and http method: " + httpMethod + ";");
 
+		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
+		context.getLogger().log("Cognito id: " + cognitoId);
+		CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
+				.userPoolId(cognitoId)
+				.clientName("task10_app_client_id")
+				.generateSecret(false)
+				.build());
+		context.getLogger().log("Create user pool client response: " + createUserPoolClientResponse);
+
 		switch(path) {
 			case "/signup":
-				if("POST".equals(httpMethod)) return handleSignUp(event, context);
+				if("POST".equals(httpMethod)) return handleSignUp(event, context, cognitoClient);
 				break;
 			case "/signin":
-				if("POST".equals(httpMethod)) return handleSignIn(event, context);
+				if("POST".equals(httpMethod)) return handleSignIn(event, context, cognitoClient);
 				break;
 			case "/tables":
-				if("POST".equals(httpMethod)) return handleCreateTable(event, context);
-				if("GET".equals(httpMethod)) return handleGetTables(event, context);
+				if("POST".equals(httpMethod)) return handleCreateTable(event, context, cognitoClient);
+				if("GET".equals(httpMethod)) return handleGetTables(event, context, cognitoClient);
 				break;
 			case "/reservations":
-				if("POST".equals(httpMethod)) return handleCreateReservation(event, context);
-				if("GET".equals(httpMethod)) return handleGetReservations(event, context);
+				if("POST".equals(httpMethod)) return handleCreateReservation(event, context, cognitoClient);
+				if("GET".equals(httpMethod)) return handleGetReservations(event, context, cognitoClient);
 				break;
 		}
 
@@ -55,14 +65,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		throw new RuntimeException("No handler found for path: " + path + ", and http method: " + httpMethod + ";");
 	}
 
-	private APIGatewayProxyResponseEvent handleSignUp(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleSignUp(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		String firstName = (String) body.get("firstName");
 		String lastName = (String) body.get("lastName");
 		String email = (String) body.get("email");
 		String password = (String) body.get("password");
 
-		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
 		AdminCreateUserResponse result = null;
@@ -90,21 +99,25 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return formSuccessResponse(result.toString(), context);
 	}
 
-	private APIGatewayProxyResponseEvent handleSignIn(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleSignIn(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		String email = (String) body.get("email");
 		String password = (String) body.get("password");
 
-		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
+		ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
+				.userPoolId(cognitoId)
+				.build());
+		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
+		context.getLogger().log("App client: " + appClient);
 		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
 				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
 				.authParameters(new HashMap<String,String>() {{
 					put("USERNAME", email);
 					put("PASSWORD", password);
 				}})
-				.clientId(cognitoId)	// ?
+				.clientId(appClient.clientId())
 				.build());
 
 		Map<String, String> responseBody = new HashMap<>();
@@ -113,10 +126,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return formSuccessResponse(responseBody, context);
 	}
 
-	private APIGatewayProxyResponseEvent handleCreateTable(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleCreateTable(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		try {
-			CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(body.get("accessToken")))
 					.build());
@@ -148,10 +160,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 	}
 
-	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		try {
-			CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(body.get("accessToken")))
 					.build());
@@ -204,10 +215,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 	}
 
-	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		try {
-			CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(body.get("accessToken")))
 					.build());
@@ -238,10 +248,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 	}
 
-	private APIGatewayProxyResponseEvent handleGetReservations(APIGatewayProxyRequestEvent event, Context context) {
+	private APIGatewayProxyResponseEvent handleGetReservations(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		try {
-			CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(String.valueOf(body.get("accessToken")))
 					.build());
