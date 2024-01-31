@@ -37,7 +37,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		context.getLogger().log("Handle request with path: " + path + ", and http method: " + httpMethod + ";");
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
-		createUserPoolApiClientIfNotExists(COGNITO_NAME, cognitoClient, context);
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
+		createUserPoolApiClientIfNotExists(cognitoId, cognitoClient, context);
 
 		switch(path) {
 			case "/signup":

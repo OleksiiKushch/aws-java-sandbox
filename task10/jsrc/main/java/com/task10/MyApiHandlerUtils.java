@@ -4,16 +4,16 @@ import com.amazonaws.services.lambda.runtime.Context;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class MyApiHandlerUtils {
 
-    public static void createUserPoolApiClientIfNotExists(String cognitoName, CognitoIdentityProviderClient cognitoClient, Context context) {
-        String cognitoId = getCognitoIdByName(cognitoName, cognitoClient, context);
-        boolean atLeastOneApiClient = !cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
+    public static void createUserPoolApiClientIfNotExists(String cognitoId, CognitoIdentityProviderClient cognitoClient, Context context) {
+        boolean noOneApiClient = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
                 .userPoolId(cognitoId)
                 .build()).userPoolClients().isEmpty();
-        if (atLeastOneApiClient) {
+        if (noOneApiClient) {
             CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
                     .userPoolId(cognitoId)
                     .clientName("task10_app_client_id")
@@ -28,7 +28,14 @@ public class MyApiHandlerUtils {
         ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
                 .userPoolId(cognitoId)
                 .build());
-        UserPoolClientDescription result = response.userPoolClients().iterator().next();
+        Iterator<UserPoolClientDescription> it = response.userPoolClients().iterator();
+        UserPoolClientDescription result = null;
+        if (it.hasNext()) {
+            result = it.next();
+        } else {
+            createUserPoolApiClientIfNotExists(cognitoId, cognitoClient, context);
+        }
+
         context.getLogger().log("User pool app client: " + result);
         return result;
     }
