@@ -80,7 +80,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
 					.userPoolId(cognitoId)
 					.username(email)
-					.temporaryPassword(password)
+//					.temporaryPassword(password)
 					.messageAction(MessageActionType.SUPPRESS)
 					.userAttributes(
 							AttributeType.builder().name("email").value(email).build(),
@@ -88,6 +88,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 							AttributeType.builder().name("family_name").value(lastName).build(),
 							AttributeType.builder().name("email_verified").value("true").build()
 					)
+					.build());
+
+			cognitoClient.adminSetUserPassword(AdminSetUserPasswordRequest.builder()
+					.userPoolId(cognitoId)
+					.username(email)
+					.password(password)
+					.permanent(true)
 					.build());
 		} catch (CognitoIdentityProviderException e) {
 			context.getLogger().log(e.getMessage());
