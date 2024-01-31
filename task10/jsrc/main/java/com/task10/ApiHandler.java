@@ -7,16 +7,13 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
-import java.io.IOException;
 import java.util.*;
 
+import static com.task10.ApiHandlerConstants.*;
 import static com.task10.MyApiHandlerUtils.*;
 
 @LambdaHandler(
@@ -25,13 +22,6 @@ import static com.task10.MyApiHandlerUtils.*;
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-	private static final String RESOURCE_PROFIX = "cmtr-4df2c6a7-";
-	private static final String RESOURCE_SUFFIX = "-test";
-
-	private static final String TABLES_TABLE_NAME = RESOURCE_PROFIX + "Tables" + RESOURCE_SUFFIX;
-	private static final String RESERVATIONS_TABLE_NAME = RESOURCE_PROFIX + "Reservations" + RESOURCE_SUFFIX;
-	private static final String COGNITO_NAME = RESOURCE_PROFIX + "simple-booking-userpool" + RESOURCE_SUFFIX;
-
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 		String path = event.getPath();
 		String httpMethod = event.getHttpMethod();
@@ -39,7 +29,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
-		createUserPoolApiClientIfNotExists(cognitoId, cognitoClient, context);
+		createUserPoolApiClientIfNotExists(cognitoId, COGNITO_CLIENT_API_NAME, cognitoClient, context);
 
 		switch(path) {
 			case "/signup":
@@ -64,10 +54,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleSignUp(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
-		String firstName = (String) body.get("firstName");
-		String lastName = (String) body.get("lastName");
-		String email = (String) body.get("email");
-		String password = (String) body.get("password");
+		String firstName = (String) body.get(FIRST_NAME_ATTR);
+		String lastName = (String) body.get(LAST_NAME_ATTR);
+		String email = (String) body.get(EMAIL_NAME_ATTR);
+		String password = (String) body.get(PASSWORD_NAME_ATTR);
 
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		try {
@@ -103,8 +93,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleSignIn(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
-		String email = (String) body.get("email");
-		String password = (String) body.get("password");
+		String email = (String) body.get(EMAIL_NAME_ATTR);
+		String password = (String) body.get(PASSWORD_NAME_ATTR);
 
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		UserPoolClientDescription appClient = getUserPoolApiDesc(cognitoId, cognitoClient, context);
@@ -127,7 +117,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 
 		Map<String, String> responseBody = new HashMap<>();
-		responseBody.put("accessToken", authResponse.authenticationResult().accessToken());
+		responseBody.put(ACCESS_TOKEN_ATTR, authResponse.authenticationResult().accessToken());
 
 		return formSuccessResponse(responseBody, context);
 	}
@@ -139,15 +129,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
-			String id = String.valueOf(body.get("id"));
-			String minOrder = String.valueOf(body.get("minOrder"));
 			Map<String, AttributeValue> item = new HashMap<>();
-			item.put("id", new AttributeValue().withN(id));
-			item.put("number", new AttributeValue().withN(String.valueOf(body.get("number"))));
-			item.put("places", new AttributeValue().withN(String.valueOf(body.get("places"))));
-			item.put("isVip", new AttributeValue().withBOOL((boolean) body.get("isVip")));
+			String id = String.valueOf(body.get(TABLE_ID));
+			item.put(TABLE_ID, new AttributeValue().withN(id));
+			item.put(TABLE_NUMBER, new AttributeValue().withN(String.valueOf(body.get(TABLE_NUMBER))));
+			item.put(TABLE_PLACES, new AttributeValue().withN(String.valueOf(body.get(TABLE_PLACES))));
+			item.put(TABLE_IS_VIP, new AttributeValue().withBOOL((boolean) body.get(TABLE_IS_VIP)));
+			String minOrder = String.valueOf(body.get(TABLE_MIN_ORDER));
 			if(minOrder != null) {
-				item.put("minOrder", new AttributeValue().withN(minOrder));
+				item.put(TABLE_MIN_ORDER, new AttributeValue().withN(minOrder));
 			}
 
 			PutItemRequest putItemRequest = new PutItemRequest(TABLES_TABLE_NAME, item);
@@ -155,7 +145,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			dynamoDb.putItem(putItemRequest);
 
 			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put("id", Integer.parseInt(id));
+			responseBody.put(ID_ATTR, Integer.parseInt(id));
 
 			return formSuccessResponse(responseBody, context);
 		} catch (NotAuthorizedException ex) {
@@ -177,15 +167,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			Map<String, Object> responseBody = new HashMap<>();
 			Map<String, String> pathParameters = event.getPathParameters();
 			context.getLogger().log("Path parameter: " + pathParameters);
-			String tableId = pathParameters != null ? pathParameters.get("tableId") : null;
+			String tableId = pathParameters != null ? pathParameters.get(TABLE_ID_PATHVAR) : null;
 			context.getLogger().log("Table id: " + tableId);
 			if (Objects.isNull(tableId) || tableId.isEmpty()) {
 				ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
-				responseBody.put("tables", getAllTables(dynamoDb, scanRequest));
+				responseBody.put(TABLES_ATTR, getAllTables(dynamoDb, scanRequest));
 			} else {
 				context.getLogger().log("Handle request with tableId path parameter: " + tableId);
 				Map<String, AttributeValue> keyToGet = new HashMap<>();
-				keyToGet.put("id", new AttributeValue(tableId));
+				keyToGet.put(TABLE_ID, new AttributeValue(tableId));
 				GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName(TABLES_TABLE_NAME);
 				Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
 				if (Objects.isNull(item)) {
@@ -203,27 +193,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 	}
 
-	private List<Map<String, Object>> getAllTables(AmazonDynamoDB dynamoDb, ScanRequest scanRequest) {
-		ScanResult result = dynamoDb.scan(scanRequest);
-		List<Map<String, Object>> tables = new ArrayList<>();
-		for (Map<String, AttributeValue> item : result.getItems()) {
-			Map<String, Object> table = new HashMap<>();
-			putTableItemToMap(table, item);
-			tables.add(table);
-		}
-		return tables;
-	}
-
-	private void putTableItemToMap(Map<String, Object> map, Map<String, AttributeValue> item) {
-		map.put("id", Integer.parseInt(item.get("id").getN()));
-		map.put("number", Integer.parseInt(item.get("number").getN()));
-		map.put("places", Integer.parseInt(item.get("places").getN()));
-		map.put("isVip", item.get("isVip").getBOOL());
-		if(item.containsKey("minOrder")) {
-			map.put("minOrder", Integer.parseInt(item.get("minOrder").getN()));
-		}
-	}
-
 	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
 		try {
@@ -231,7 +200,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
-			String reservationId = UUID.randomUUID().toString();
 			Map<String, AttributeValue> item = new HashMap<>();
 			String tableNumber = String.valueOf(body.get("tableNumber"));
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
@@ -240,19 +208,21 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				return new APIGatewayProxyResponseEvent()
 						.withStatusCode(400);
 			}
-			item.put("id", new AttributeValue().withS(reservationId));
-			item.put("tableNumber", new AttributeValue().withN(tableNumber));
-			item.put("clientName", new AttributeValue().withS(String.valueOf(body.get("clientName"))));
-			item.put("phoneNumber", new AttributeValue().withS(String.valueOf(body.get("phoneNumber"))));
-			item.put("date", new AttributeValue().withS(String.valueOf(body.get("date"))));
-			item.put("slotTimeStart", new AttributeValue().withS(String.valueOf(body.get("slotTimeStart"))));
-			item.put("slotTimeEnd", new AttributeValue().withS(String.valueOf(body.get("slotTimeEnd"))));
+
+			String reservationId = UUID.randomUUID().toString();
+			item.put(RESERVATION_ID, new AttributeValue().withS(reservationId));
+			item.put(RESERVATION_TABLE_NUMBER, new AttributeValue().withN(tableNumber));
+			item.put(RESERVATION_CLIENT_NAME, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_CLIENT_NAME))));
+			item.put(RESERVATION_PHONE_NUMBER, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_PHONE_NUMBER))));
+			item.put(RESERVATION_DATE, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_DATE))));
+			item.put(RESERVATION_SLOT_TIME_START, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_START))));
+			item.put(RESERVATION_SLOT_TIME_END, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_END))));
 
 			PutItemRequest putItemRequest = new PutItemRequest(RESERVATIONS_TABLE_NAME, item);
 			dynamoDb.putItem(putItemRequest);
 
 			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put("reservationId", reservationId);
+			responseBody.put(RESERVATION_ID_ATTR, reservationId);
 
 			return formSuccessResponse(responseBody, context);
 		} catch (NotAuthorizedException ex) {
@@ -276,17 +246,17 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			List<Map<String, Object>> reservations = new ArrayList<>();
 			for (Map<String, AttributeValue> item : result.getItems()) {
 				Map<String, Object> reservation = new HashMap<>();
-				reservation.put("tableNumber", Integer.parseInt(item.get("tableNumber").getN()));
-				reservation.put("clientName", item.get("clientName").getS());
-				reservation.put("phoneNumber", item.get("phoneNumber").getS());
-				reservation.put("date", item.get("date").getS());
-				reservation.put("slotTimeStart", item.get("slotTimeStart").getS());
-				reservation.put("slotTimeEnd", item.get("slotTimeEnd").getS());
+				reservation.put(RESERVATION_TABLE_NUMBER, Integer.parseInt(item.get(RESERVATION_TABLE_NUMBER).getN()));
+				reservation.put(RESERVATION_CLIENT_NAME, item.get(RESERVATION_CLIENT_NAME).getS());
+				reservation.put(RESERVATION_PHONE_NUMBER, item.get(RESERVATION_PHONE_NUMBER).getS());
+				reservation.put(RESERVATION_DATE, item.get(RESERVATION_DATE).getS());
+				reservation.put(RESERVATION_SLOT_TIME_START, item.get(RESERVATION_SLOT_TIME_START).getS());
+				reservation.put(RESERVATION_SLOT_TIME_END, item.get(RESERVATION_SLOT_TIME_END).getS());
 				reservations.add(reservation);
 			}
 
 			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put("reservations", reservations);
+			responseBody.put(RESERVATIONS_ATTR, reservations);
 
 			return formSuccessResponse(responseBody, context);
 		} catch (NotAuthorizedException ex) {
@@ -295,60 +265,5 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.withBody("Can't get reservations because customer is unauthorized. Invalid Access Token.")
 					.withStatusCode(400);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private Map<String, Object> eventToBody(APIGatewayProxyRequestEvent event, Context context) {
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> body = null;
-		try {
-			body = mapper.readValue(event.getBody(), Map.class);
-		} catch (IOException e) {
-			context.getLogger().log(e.getMessage());
-			throw new RuntimeException(e);
-		}
-		context.getLogger().log("Request body: " + body);
-		return body;
-	}
-
-	private APIGatewayProxyResponseEvent formSuccessResponse(Object responseBody, Context context) {
-		ObjectMapper mapper = new ObjectMapper();
-		APIGatewayProxyResponseEvent response = null;
-		try {
-			if (Objects.nonNull(responseBody)) {
-				response = new APIGatewayProxyResponseEvent().withBody(mapper.writeValueAsString(responseBody))
-						.withStatusCode(200);
-			} else {
-				response = new APIGatewayProxyResponseEvent()
-						.withStatusCode(200);
-			}
-		} catch (JsonProcessingException e) {
-			context.getLogger().log(e.getMessage());
-			throw new RuntimeException(e);
-		}
-		context.getLogger().log("Response: " + response);
-		return response;
-	}
-
-	private Map<String, String> getHeadersFromEvent(APIGatewayProxyRequestEvent event, Context context) {
-		Map<String, String> headers = event.getHeaders();
-		context.getLogger().log("Request headers: " + headers);
-		return headers;
-	}
-
-	private String getAccessToken(Map<String, String> headers, Context context) {
-		String accessToken = headers.get("Authorization").split(" ")[1];
-		context.getLogger().log("Access token: " + accessToken);
-		return accessToken;
-	}
-
-	private boolean checkIfTableExists(String tableNumber, AmazonDynamoDB dynamoDb) {
-		Map<String, AttributeValue> key = new HashMap<>();
-		key.put("number", new AttributeValue().withN(tableNumber));
-		GetItemRequest request = new GetItemRequest()
-				.withTableName(TABLES_TABLE_NAME)
-				.withKey(key);
-		Map<String, AttributeValue> result = dynamoDb.getItem(request).getItem();
-        return Objects.nonNull(result);
 	}
 }
