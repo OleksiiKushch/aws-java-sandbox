@@ -75,6 +75,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
+		ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
+				.userPoolId(cognitoId)
+				.build());
+		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
+		context.getLogger().log("App client: " + appClient);
 //		AdminCreateUserResponse result = null;
 		SignUpResponse result = null;
 		try {
@@ -91,7 +96,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 //					.messageAction(MessageActionType.SUPPRESS)
 //					.build());
 			result = cognitoClient.signUp(SignUpRequest.builder()
-					.clientId(cognitoId)
+					.clientId(appClient.clientId())
 					.username(email)
 					.password(password)
 					.userAttributes(
