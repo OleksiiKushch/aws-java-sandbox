@@ -40,7 +40,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
 				.userPoolId(cognitoId)
 				.clientName("task10_app_client_id")
-				.explicitAuthFlows(ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
+				.explicitAuthFlows(ExplicitAuthFlowsType.ADMIN_NO_SRP_AUTH, ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
 				.generateSecret(false)
 				.build());
 		context.getLogger().log("Create user pool client response: " + createUserPoolClientResponse);
@@ -75,11 +75,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
-		ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(ListUserPoolClientsRequest.builder()
-				.userPoolId(cognitoId)
-				.build());
-		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
-		context.getLogger().log("App client: " + appClient);
 		AdminCreateUserResponse result = null;
 		try {
 			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
