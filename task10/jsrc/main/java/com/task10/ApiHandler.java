@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
@@ -73,6 +74,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			AdminCreateUserResponse creationResult = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
 					.userPoolId(cognitoId)
 					.username(email)
+					.temporaryPassword(password)
 					.messageAction(MessageActionType.SUPPRESS)
 					.userAttributes(
 							AttributeType.builder().name("email").value(email).build(),
@@ -83,13 +85,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.build());
 			context.getLogger().log("Create admin: " + creationResult);
 
-			AdminSetUserPasswordResponse setPasswordResponse = cognitoClient.adminSetUserPassword(AdminSetUserPasswordRequest.builder()
+			cognitoClient.adminSetUserPassword(AdminSetUserPasswordRequest.builder()
 							.userPoolId(cognitoId)
 							.username(email)
 							.password(password)
 							.permanent(true)
 							.build());
-			context.getLogger().log("Set password response: " + setPasswordResponse);
+			context.getLogger().log("Set new password successful.");
 		} catch (CognitoIdentityProviderException e) {
 			context.getLogger().log(e.getMessage());
 			return new APIGatewayProxyResponseEvent()
@@ -107,16 +109,22 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		UserPoolClientDescription appClient = getUserPoolApiDesc(cognitoId, cognitoClient, context);
 		Map<String, String> authParameters = new HashMap<>();
-		authParameters.put("USERNAME", email);
-		authParameters.put("PASSWORD", password);
-		AdminInitiateAuthResponse authResponse = cognitoClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
-				.userPoolId(cognitoId)
-				.clientId(appClient.clientId())
-				.authFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
-				.authParameters(authParameters)
-				.build());
-		context.getLogger().log("Auth response: " + authResponse);
-		context.getLogger().log("Auth result: " + authResponse.authenticationResult());
+		authParameters.put("username", email);
+		authParameters.put("password", password);
+		AdminInitiateAuthResponse authResponse = null;
+		try {
+			authResponse = cognitoClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
+					.userPoolId(cognitoId)
+					.clientId(appClient.clientId())
+					.authFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
+					.authParameters(authParameters)
+					.build());
+		} catch (UserNotFoundException e) {
+			context.getLogger().log(e.getMessage());
+			return new APIGatewayProxyResponseEvent()
+					.withBody(e.getMessage())
+					.withStatusCode(400);
+		}
 
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("accessToken", authResponse.authenticationResult().accessToken());
@@ -126,9 +134,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleCreateTable(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
+		Map<String, String> headers = event.getHeaders();
 		try {
-			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(body.get("accessToken")))
+			cognitoClient.getUser(GetUserRequest.builder()
+					.accessToken(String.valueOf(headers.get("accessToken")))
 					.build());
 
 			String id = String.valueOf(body.get("id"));
@@ -159,10 +168,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
-		Map<String, Object> body = eventToBody(event, context);
+		Map<String, String> headers = event.getHeaders();
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(body.get("accessToken")))
+					.accessToken(String.valueOf(headers.get("accessToken")))
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
@@ -215,9 +224,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
+		Map<String, String> headers = event.getHeaders();
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(body.get("accessToken")))
+					.accessToken(String.valueOf(headers.get("accessToken")))
 					.build());
 
 			String reservationId = UUID.randomUUID().toString();
@@ -247,10 +257,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetReservations(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
-		Map<String, Object> body = eventToBody(event, context);
+		Map<String, String> headers = event.getHeaders();
 		try {
 			GetUserResponse userResponse = cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(String.valueOf(body.get("accessToken")))
+					.accessToken(String.valueOf(headers.get("accessToken")))
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
