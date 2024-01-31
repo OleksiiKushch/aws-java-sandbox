@@ -40,7 +40,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
 				.userPoolId(cognitoId)
 				.clientName("task10_app_client_id")
-				.explicitAuthFlows(ExplicitAuthFlowsType.ALLOW_ADMIN_USER_PASSWORD_AUTH, ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
+				.explicitAuthFlows(ExplicitAuthFlowsType.ALLOW_USER_PASSWORD_AUTH, ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
 				.generateSecret(false)
 				.build());
 		context.getLogger().log("Create user pool client response: " + createUserPoolClientResponse);
@@ -75,19 +75,31 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
-		AdminCreateUserResponse result = null;
+//		AdminCreateUserResponse result = null;
+		SignUpResponse result = null;
 		try {
-			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
-					.userPoolId(cognitoId)
+//			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
+//					.userPoolId(cognitoId)
+//					.username(email)
+//					.temporaryPassword(password)
+//					.userAttributes(
+//							AttributeType.builder().name("email").value(email).build(),
+//							AttributeType.builder().name("given_name").value(firstName).build(),
+//							AttributeType.builder().name("family_name").value(lastName).build(),
+//							AttributeType.builder().name("email_verified").value("true").build()
+//					)
+//					.messageAction(MessageActionType.SUPPRESS)
+//					.build());
+			result = cognitoClient.signUp(SignUpRequest.builder()
+					.clientId(cognitoId)
 					.username(email)
-					.temporaryPassword(password)
+					.password(password)
 					.userAttributes(
 							AttributeType.builder().name("email").value(email).build(),
 							AttributeType.builder().name("given_name").value(firstName).build(),
 							AttributeType.builder().name("family_name").value(lastName).build(),
 							AttributeType.builder().name("email_verified").value("true").build()
 					)
-					.messageAction(MessageActionType.SUPPRESS)
 					.build());
 		} catch (CognitoIdentityProviderException e) {
 			context.getLogger().log(e.getMessage());
@@ -114,7 +126,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		context.getLogger().log("App client: " + appClient);
 		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
 				.clientId(appClient.clientId())
-				.authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
+				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
 				.authParameters(new HashMap<String,String>() {{
 					put("USERNAME", email);
 					put("PASSWORD", password);
