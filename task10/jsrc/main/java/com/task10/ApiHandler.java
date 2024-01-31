@@ -158,15 +158,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		try {
-			context.getLogger().log("11111111111111111");
 			cognitoClient.getUser(GetUserRequest.builder()
 					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
-			context.getLogger().log("222222222222222222");
+
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
-			context.getLogger().log("333333333333333333");
+
 			Map<String, Object> responseBody = new HashMap<>();
-			context.getLogger().log("444444444444444444");
 			Map<String, String> pathParameters = event.getPathParameters();
 			context.getLogger().log("Path parameter: " + pathParameters);
 			String tableId = pathParameters != null ? pathParameters.get(TABLE_ID_PATHVAR) : null;
@@ -206,7 +204,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			String tableNumber = String.valueOf(body.get(RESERVATION_TABLE_NUMBER));
 			String reservationId = UUID.randomUUID().toString();
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
-			if (checkIfTableExists(tableNumber, dynamoDb, context) && checkIfReservationWithTableAlreadyExists(tableNumber, dynamoDb, context)) {
+			if (checkIfTableExists(tableNumber, dynamoDb, context) && checkIfReservationWithTableIsNotExists(tableNumber, dynamoDb, context)) {
 				item.put(RESERVATION_ID, new AttributeValue().withS(reservationId));
 				item.put(RESERVATION_TABLE_NUMBER, new AttributeValue().withN(tableNumber));
 				item.put(RESERVATION_CLIENT_NAME, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_CLIENT_NAME))));

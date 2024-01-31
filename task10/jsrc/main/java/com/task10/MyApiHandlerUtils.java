@@ -137,9 +137,9 @@ public class MyApiHandlerUtils {
         return tables.stream().anyMatch(table -> tableNumber.equals(String.valueOf(table.get(TABLE_NUMBER))));
     }
 
-    public static boolean checkIfReservationWithTableAlreadyExists(String tableNumber, AmazonDynamoDB dynamoDb, Context context) {
+    public static boolean checkIfReservationWithTableIsNotExists(String tableNumber, AmazonDynamoDB dynamoDb, Context context) {
         ScanRequest scanRequest = new ScanRequest().withTableName(RESERVATIONS_TABLE_NAME);
         List<Map<String, Object>> tables = getAllTables(dynamoDb, scanRequest);
-        return tables.stream().anyMatch(reservation -> tableNumber.equals(String.valueOf(reservation.get(RESERVATION_TABLE_NUMBER))));
+        return tables.stream().noneMatch(reservation -> tableNumber.equals(String.valueOf(reservation.get(RESERVATION_TABLE_NUMBER))));
     }
 }
