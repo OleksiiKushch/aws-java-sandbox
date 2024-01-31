@@ -136,7 +136,7 @@ public class MyApiHandlerUtils {
         List<Map<String, Object>> tables = getAllTables(dynamoDb, scanRequest);
         context.getLogger().log("Expected table number: " + tableNumber);
         context.getLogger().log("Founded tables: " + tables);
-        boolean result = tables.stream().anyMatch(table -> tableNumber.equals(table.get(TABLE_NUMBER)));
+        boolean result = tables.stream().anyMatch(table -> tableNumber.equals(String.valueOf(table.get(TABLE_NUMBER))));
         context.getLogger().log("Table is present?: " + result);
         return result;
     }
