@@ -4,17 +4,10 @@
       "Statement": [
         {
           "Action": [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents",
-            "dynamodb:GetItem",
-            "dynamodb:Query",
-            "dynamodb:PutItem",
-            "dynamodb:Batch*",
-            "dynamodb:DeleteItem",
-            "ssm:PutParameter",
-            "ssm:GetParameter",
-            "kms:Decrypt",
+            "logs:*",
+            "dynamodb:*",
+            "ssm:*",
+            "kms:*",
             "cognito-idp:*"
           ],
           "Effect": "Allow",

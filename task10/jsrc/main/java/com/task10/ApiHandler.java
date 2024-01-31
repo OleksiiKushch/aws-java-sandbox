@@ -247,7 +247,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			item.put("date", new AttributeValue(String.valueOf(body.get("date"))));
 			item.put("slotTimeStart", new AttributeValue(String.valueOf(body.get("slotTimeStart"))));
 			item.put("slotTimeEnd", new AttributeValue(String.valueOf(body.get("slotTimeEnd"))));
-			item.put("reservationId", new AttributeValue(reservationId));
+			item.put("id", new AttributeValue(reservationId));
 
 			PutItemRequest putItemRequest = new PutItemRequest(RESERVATIONS_TABLE_NAME, item);
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
