@@ -198,20 +198,27 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			String tableId = event.getPathParameters().get("tableId");
 			context.getLogger().log("Handle request with tableId path parameter: " + tableId);
 
-			Map<String, AttributeValue> keyToGet = new HashMap<>();
-			keyToGet.put(TABLE_ID, new AttributeValue().withN(tableId));
-			GetItemRequest request = new GetItemRequest()
-					.withTableName(TABLES_TABLE_NAME)
-					.withKey(keyToGet);
-			Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
+			ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
+			List<Map<String, Object>> tables = getAllTables(dynamoDb, scanRequest);
+			Optional<Map<String, Object>> item = tables.stream().filter(table -> tableId.equals(String.valueOf(table.get(TABLE_ID))))
+					.findFirst();
 
-			if (Objects.isNull(item)) {
+//			Map<String, AttributeValue> keyToGet = new HashMap<>();
+//			keyToGet.put(TABLE_ID, new AttributeValue().withN(tableId));
+//			GetItemRequest request = new GetItemRequest()
+//					.withTableName(TABLES_TABLE_NAME)
+//					.withKey(keyToGet);
+//			Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
+
+			if (item.isPresent()) {
+				Map<String, Object> result = item.get();
+				context.getLogger().log("Result: " + result);
+				return formSuccessResponse(result, context);
+			} else {
 				return new APIGatewayProxyResponseEvent()
 						.withBody("No table found for id: " + tableId)
 						.withStatusCode(404);
 			}
-
-			return formSuccessResponse(item, context);
 		} catch (NotAuthorizedException ex) {
 			context.getLogger().log("Can't get table because customer is unauthorized. Invalid Access Token.");
 			return new APIGatewayProxyResponseEvent()
