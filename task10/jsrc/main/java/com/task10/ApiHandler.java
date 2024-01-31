@@ -202,21 +202,21 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 			Map<String, AttributeValue> item = new HashMap<>();
 			String tableNumber = String.valueOf(body.get(RESERVATION_TABLE_NUMBER));
+			String reservationId = UUID.randomUUID().toString();
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
 			if (checkIfTableExists(tableNumber, dynamoDb, context)) {
+				item.put(RESERVATION_ID, new AttributeValue().withS(reservationId));
+				item.put(RESERVATION_TABLE_NUMBER, new AttributeValue().withN(tableNumber));
+				item.put(RESERVATION_CLIENT_NAME, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_CLIENT_NAME))));
+				item.put(RESERVATION_PHONE_NUMBER, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_PHONE_NUMBER))));
+				item.put(RESERVATION_DATE, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_DATE))));
+				item.put(RESERVATION_SLOT_TIME_START, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_START))));
+				item.put(RESERVATION_SLOT_TIME_END, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_END))));
+			} else {
 				context.getLogger().log("Table with number: " + tableNumber + " dose not exists.");
 				return new APIGatewayProxyResponseEvent()
 						.withStatusCode(400);
 			}
-
-			String reservationId = UUID.randomUUID().toString();
-			item.put(RESERVATION_ID, new AttributeValue().withS(reservationId));
-			item.put(RESERVATION_TABLE_NUMBER, new AttributeValue().withN(tableNumber));
-			item.put(RESERVATION_CLIENT_NAME, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_CLIENT_NAME))));
-			item.put(RESERVATION_PHONE_NUMBER, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_PHONE_NUMBER))));
-			item.put(RESERVATION_DATE, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_DATE))));
-			item.put(RESERVATION_SLOT_TIME_START, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_START))));
-			item.put(RESERVATION_SLOT_TIME_END, new AttributeValue().withS(String.valueOf(body.get(RESERVATION_SLOT_TIME_END))));
 
 			PutItemRequest putItemRequest = new PutItemRequest(RESERVATIONS_TABLE_NAME, item);
 			dynamoDb.putItem(putItemRequest);
