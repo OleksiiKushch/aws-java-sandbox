@@ -134,13 +134,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleCreateTable(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
-		Map<String, String> headers = event.getHeaders();
-		context.getLogger().log("Request headers: " + headers);
 		try {
-			String accessToken = headers.get("Authorization").split(" ")[1];
-			context.getLogger().log("Access token: " + accessToken);
 			cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(accessToken)
+					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
 			String id = String.valueOf(body.get("id"));
@@ -159,7 +155,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			dynamoDb.putItem(putItemRequest);
 
 			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put("id", id);
+			responseBody.put("id", Integer.parseInt(id));
 
 			return formSuccessResponse(responseBody, context);
 		} catch (NotAuthorizedException ex) {
@@ -171,13 +167,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetTables(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
-		Map<String, String> headers = event.getHeaders();
-		context.getLogger().log("Request headers: " + headers);
 		try {
-			String accessToken = headers.get("Authorization").split(" ")[1];
-			context.getLogger().log("Access token: " + accessToken);
 			cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(accessToken)
+					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
@@ -230,13 +222,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleCreateReservation(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
 		Map<String, Object> body = eventToBody(event, context);
-		Map<String, String> headers = event.getHeaders();
-		context.getLogger().log("Request headers: " + headers);
 		try {
-			String accessToken = headers.get("Authorization").split(" ")[1];
-			context.getLogger().log("Access token: " + accessToken);
 			cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(accessToken)
+					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
 			String reservationId = UUID.randomUUID().toString();
@@ -266,13 +254,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetReservations(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
-		Map<String, String> headers = event.getHeaders();
-		context.getLogger().log("Request headers: " + headers);
 		try {
-			String accessToken = headers.get("Authorization").split(" ")[1];
-			context.getLogger().log("Access token: " + accessToken);
 			cognitoClient.getUser(GetUserRequest.builder()
-					.accessToken(accessToken)
+					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
@@ -334,5 +318,17 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		}
 		context.getLogger().log("Response: " + response);
 		return response;
+	}
+
+	private Map<String, String> getHeadersFromEvent(APIGatewayProxyRequestEvent event, Context context) {
+		Map<String, String> headers = event.getHeaders();
+		context.getLogger().log("Request headers: " + headers);
+		return headers;
+	}
+
+	private String getAccessToken(Map<String, String> headers, Context context) {
+		String accessToken = headers.get("Authorization").split(" ")[1];
+		context.getLogger().log("Access token: " + accessToken);
+		return accessToken;
 	}
 }
