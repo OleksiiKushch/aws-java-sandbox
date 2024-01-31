@@ -184,7 +184,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				context.getLogger().log("Handle request with tableId path parameter: " + tableId);
 				Map<String, AttributeValue> keyToGet = new HashMap<>();
 				keyToGet.put("id", new AttributeValue(tableId));
-				GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName("Tables");
+				GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName(TABLES_TABLE_NAME);
 				Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
 				if (Objects.isNull(item)) {
 					return new APIGatewayProxyResponseEvent().withBody("No item found for " + tableId).withStatusCode(404);
@@ -231,7 +231,14 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 			String reservationId = UUID.randomUUID().toString();
 			Map<String, AttributeValue> item = new HashMap<>();
-			item.put("tableNumber", new AttributeValue(String.valueOf(body.get("tableNumber"))));
+			String tableNumber = String.valueOf(body.get("tableNumber"));
+			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
+			if (checkIfTableExists(tableNumber, dynamoDb)) {
+				context.getLogger().log("Table with number: " + tableNumber + " dose not exists.");
+				return new APIGatewayProxyResponseEvent()
+						.withStatusCode(400);
+			}
+			item.put("tableNumber", new AttributeValue(tableNumber));
 			item.put("clientName", new AttributeValue(String.valueOf(body.get("clientName"))));
 			item.put("phoneNumber", new AttributeValue(String.valueOf(body.get("phoneNumber"))));
 			item.put("date", new AttributeValue(String.valueOf(body.get("date"))));
@@ -240,7 +247,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			item.put("id", new AttributeValue(reservationId));
 
 			PutItemRequest putItemRequest = new PutItemRequest(RESERVATIONS_TABLE_NAME, item);
-			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
 			dynamoDb.putItem(putItemRequest);
 
 			Map<String, Object> responseBody = new HashMap<>();
@@ -332,5 +338,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String accessToken = headers.get("Authorization").split(" ")[1];
 		context.getLogger().log("Access token: " + accessToken);
 		return accessToken;
+	}
+
+	private boolean checkIfTableExists(String tableNumber, AmazonDynamoDB dynamoDb) {
+		Map<String, AttributeValue> key = new HashMap<>();
+		key.put("number", new AttributeValue().withN(tableNumber));
+		GetItemRequest request = new GetItemRequest()
+				.withTableName(TABLES_TABLE_NAME)
+				.withKey(key);
+		Map<String, AttributeValue> result = dynamoDb.getItem(request).getItem()
+        return Objects.nonNull(result);
 	}
 }
