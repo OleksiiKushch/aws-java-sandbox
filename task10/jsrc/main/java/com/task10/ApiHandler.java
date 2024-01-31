@@ -65,18 +65,27 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
 		context.getLogger().log("Cognito id: " + cognitoId);
-		AdminCreateUserResponse result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
-				.userPoolId(cognitoId)
-				.username(email)
-				.temporaryPassword(password)
-				.userAttributes(
-						AttributeType.builder().name("email").value(email).build(),
-						AttributeType.builder().name("given_name").value(firstName).build(),
-						AttributeType.builder().name("family_name").value(lastName).build(),
-						AttributeType.builder().name("email_verified").value("true").build()
-				)
-				.messageAction(MessageActionType.SUPPRESS)
-				.build());
+		AdminCreateUserResponse result = null;
+		try {
+			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
+					.userPoolId(cognitoId)
+					.username(email)
+					.temporaryPassword(password)
+					.userAttributes(
+							AttributeType.builder().name("email").value(email).build(),
+							AttributeType.builder().name("given_name").value(firstName).build(),
+							AttributeType.builder().name("family_name").value(lastName).build(),
+							AttributeType.builder().name("email_verified").value("true").build()
+					)
+					.messageAction(MessageActionType.SUPPRESS)
+					.build());
+		} catch (CognitoIdentityProviderException e) {
+			context.getLogger().log(e.getMessage());
+			return new APIGatewayProxyResponseEvent()
+					.withBody(e.getMessage())
+					.withStatusCode(400);
+		}
+
 		context.getLogger().log("Result: " + result);
 		return formSuccessResponse(result.toString(), context);
 	}
@@ -87,13 +96,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String password = (String) body.get("password");
 
 		CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
+		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient);
+		context.getLogger().log("Cognito id: " + cognitoId);
 		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
 				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
 				.authParameters(new HashMap<String,String>() {{
 					put("USERNAME", email);
 					put("PASSWORD", password);
 				}})
-//				.clientId("YourCognitoClientId")
+				.clientId(cognitoId)	// ?
 				.build());
 
 		Map<String, String> responseBody = new HashMap<>();
