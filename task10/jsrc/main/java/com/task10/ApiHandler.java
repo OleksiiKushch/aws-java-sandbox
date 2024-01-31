@@ -114,7 +114,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		context.getLogger().log("App client: " + appClient);
 		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
 				.clientId(appClient.clientId())
-				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
+				.authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
 				.authParameters(new HashMap<String,String>() {{
 					put("USERNAME", email);
 					put("PASSWORD", password);
