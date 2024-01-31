@@ -176,6 +176,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
 
 			Map<String, Object> responseBody = new HashMap<>();
+			context.getLogger().log("Event resource: " + event.getResource());
 			if (event.getResource().equals("/tables/{tableId}")) {
 				Map<String, AttributeValue> keyToGet = new HashMap<>();
 				String tableId = event.getPathParameters().get("tableId");
