@@ -40,7 +40,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		CreateUserPoolClientResponse createUserPoolClientResponse = cognitoClient.createUserPoolClient(CreateUserPoolClientRequest.builder()
 				.userPoolId(cognitoId)
 				.clientName("task10_app_client_id")
-				.explicitAuthFlows(ExplicitAuthFlowsType.ALLOW_USER_PASSWORD_AUTH, ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
+				.explicitAuthFlows(ExplicitAuthFlowsType.ALLOW_REFRESH_TOKEN_AUTH)
 				.generateSecret(false)
 				.build());
 		context.getLogger().log("Create user pool client response: " + createUserPoolClientResponse);
@@ -80,25 +80,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				.build());
 		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
 		context.getLogger().log("App client: " + appClient);
-//		AdminCreateUserResponse result = null;
-		SignUpResponse result = null;
+		AdminCreateUserResponse result = null;
 		try {
-//			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
-//					.userPoolId(cognitoId)
-//					.username(email)
-//					.temporaryPassword(password)
-//					.userAttributes(
-//							AttributeType.builder().name("email").value(email).build(),
-//							AttributeType.builder().name("given_name").value(firstName).build(),
-//							AttributeType.builder().name("family_name").value(lastName).build(),
-//							AttributeType.builder().name("email_verified").value("true").build()
-//					)
-//					.messageAction(MessageActionType.SUPPRESS)
-//					.build());
-			result = cognitoClient.signUp(SignUpRequest.builder()
-					.clientId(appClient.clientId())
+			result = cognitoClient.adminCreateUser(AdminCreateUserRequest.builder()
+					.userPoolId(cognitoId)
 					.username(email)
-					.password(password)
+					.temporaryPassword(password)
+					.messageAction(MessageActionType.SUPPRESS)
 					.userAttributes(
 							AttributeType.builder().name("email").value(email).build(),
 							AttributeType.builder().name("given_name").value(firstName).build(),
@@ -129,13 +117,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				.build());
 		UserPoolClientDescription appClient = response.userPoolClients().iterator().next();
 		context.getLogger().log("App client: " + appClient);
-		InitiateAuthResponse authResponse = cognitoClient.initiateAuth(InitiateAuthRequest.builder()
+		Map<String, String> authParameters = new HashMap<>();
+		authParameters.put("USERNAME", email);
+		authParameters.put("PASSWORD", password);
+
+		AdminInitiateAuthResponse authResponse = cognitoClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
+				.userPoolId(cognitoId)
 				.clientId(appClient.clientId())
-				.authFlow(AuthFlowType.USER_PASSWORD_AUTH)
-				.authParameters(new HashMap<String,String>() {{
-					put("USERNAME", email);
-					put("PASSWORD", password);
-				}})
+				.authFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
+				.authParameters(authParameters)
 				.build());
 		context.getLogger().log("Auth response: " + authResponse);
 		context.getLogger().log("Auth result: " + authResponse.authenticationResult());
