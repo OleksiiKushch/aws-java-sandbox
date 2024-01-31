@@ -200,16 +200,18 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 			Map<String, AttributeValue> keyToGet = new HashMap<>();
 			keyToGet.put(TABLE_ID, new AttributeValue().withN(tableId));
-			GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName(TABLES_TABLE_NAME);
+			GetItemRequest request = new GetItemRequest()
+					.withTableName(TABLES_TABLE_NAME)
+					.withKey(keyToGet);
 			Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
+
 			if (Objects.isNull(item)) {
-				return new APIGatewayProxyResponseEvent().withBody("No item found for " + tableId).withStatusCode(404);
+				return new APIGatewayProxyResponseEvent()
+						.withBody("No table found for id: " + tableId)
+						.withStatusCode(404);
 			}
 
-			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put(TABLES_ATTR, item);
-
-			return formSuccessResponse(responseBody, context);
+			return formSuccessResponse(item, context);
 		} catch (NotAuthorizedException ex) {
 			context.getLogger().log("Can't get table because customer is unauthorized. Invalid Access Token.");
 			return new APIGatewayProxyResponseEvent()
@@ -266,19 +268,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
 			ScanRequest scanRequest = new ScanRequest().withTableName(RESERVATIONS_TABLE_NAME);
-			ScanResult result = dynamoDb.scan(scanRequest);
 
-			List<Map<String, Object>> reservations = new ArrayList<>();
-			for (Map<String, AttributeValue> item : result.getItems()) {
-				Map<String, Object> reservation = new HashMap<>();
-				reservation.put(RESERVATION_TABLE_NUMBER, Integer.parseInt(item.get(RESERVATION_TABLE_NUMBER).getN()));
-				reservation.put(RESERVATION_CLIENT_NAME, item.get(RESERVATION_CLIENT_NAME).getS());
-				reservation.put(RESERVATION_PHONE_NUMBER, item.get(RESERVATION_PHONE_NUMBER).getS());
-				reservation.put(RESERVATION_DATE, item.get(RESERVATION_DATE).getS());
-				reservation.put(RESERVATION_SLOT_TIME_START, item.get(RESERVATION_SLOT_TIME_START).getS());
-				reservation.put(RESERVATION_SLOT_TIME_END, item.get(RESERVATION_SLOT_TIME_END).getS());
-				reservations.add(reservation);
-			}
+			List<Map<String, Object>> reservations = getAllReservations(dynamoDb, scanRequest);
 
 			Map<String, Object> responseBody = new HashMap<>();
 			responseBody.put(RESERVATIONS_ATTR, reservations);

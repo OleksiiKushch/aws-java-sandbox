@@ -69,13 +69,13 @@ public class MyApiHandlerUtils {
         List<Map<String, Object>> tables = new ArrayList<>();
         for (Map<String, AttributeValue> item : result.getItems()) {
             Map<String, Object> table = new HashMap<>();
-            putTableItemToMap(table, item);
+            convertTableToMap(table, item);
             tables.add(table);
         }
         return tables;
     }
 
-    public static void putTableItemToMap(Map<String, Object> map, Map<String, AttributeValue> item) {
+    public static void convertTableToMap(Map<String, Object> map, Map<String, AttributeValue> item) {
         map.put(TABLE_ID, Integer.parseInt(item.get(TABLE_ID).getN()));
         map.put(TABLE_NUMBER, Integer.parseInt(item.get(TABLE_NUMBER).getN()));
         map.put(TABLE_PLACES, Integer.parseInt(item.get(TABLE_PLACES).getN()));
@@ -85,6 +85,25 @@ public class MyApiHandlerUtils {
         }
     }
 
+    public static List<Map<String, Object>> getAllReservations(AmazonDynamoDB dynamoDb, ScanRequest scanRequest) {
+        ScanResult result = dynamoDb.scan(scanRequest);
+        List<Map<String, Object>> reservations = new ArrayList<>();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            Map<String, Object> reservation = new HashMap<>();
+            convertReservationToMap(reservation, item);
+            reservations.add(reservation);
+        }
+        return reservations;
+    }
+
+    public static void convertReservationToMap(Map<String, Object> map, Map<String, AttributeValue> item) {
+        map.put(RESERVATION_TABLE_NUMBER, Integer.parseInt(item.get(RESERVATION_TABLE_NUMBER).getN()));
+        map.put(RESERVATION_CLIENT_NAME, item.get(RESERVATION_CLIENT_NAME).getS());
+        map.put(RESERVATION_PHONE_NUMBER, item.get(RESERVATION_PHONE_NUMBER).getS());
+        map.put(RESERVATION_DATE, item.get(RESERVATION_DATE).getS());
+        map.put(RESERVATION_SLOT_TIME_START, item.get(RESERVATION_SLOT_TIME_START).getS());
+        map.put(RESERVATION_SLOT_TIME_END, item.get(RESERVATION_SLOT_TIME_END).getS());
+    }
 
     @SuppressWarnings("unchecked")
     public static Map<String, Object> eventToBody(APIGatewayProxyRequestEvent event, Context context) {
@@ -139,7 +158,7 @@ public class MyApiHandlerUtils {
 
     public static boolean checkIfReservationWithTableIsNotExists(String tableNumber, AmazonDynamoDB dynamoDb, Context context) {
         ScanRequest scanRequest = new ScanRequest().withTableName(RESERVATIONS_TABLE_NAME);
-        List<Map<String, Object>> tables = getAllTables(dynamoDb, scanRequest);
+        List<Map<String, Object>> tables = getAllReservations(dynamoDb, scanRequest);
         return tables.stream().noneMatch(reservation -> tableNumber.equals(String.valueOf(reservation.get(RESERVATION_TABLE_NUMBER))));
     }
 }
