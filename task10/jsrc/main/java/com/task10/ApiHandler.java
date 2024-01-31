@@ -31,21 +31,32 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String cognitoId = getCognitoIdByName(COGNITO_NAME, cognitoClient, context);
 		createUserPoolApiClientIfNotExists(cognitoId, COGNITO_CLIENT_API_NAME, cognitoClient, context);
 
-		switch(path) {
-			case "/signup":
-				if("POST".equals(httpMethod)) return handleSignUp(event, context, cognitoClient);
-				break;
-			case "/signin":
-				if("POST".equals(httpMethod)) return handleSignIn(event, context, cognitoClient);
-				break;
-			case "/tables":
-				if("POST".equals(httpMethod)) return handleCreateTable(event, context, cognitoClient);
-				if("GET".equals(httpMethod)) return handleGetTables(event, context, cognitoClient);
-				break;
-			case "/reservations":
-				if("POST".equals(httpMethod)) return handleCreateReservation(event, context, cognitoClient);
-				if("GET".equals(httpMethod)) return handleGetReservations(event, context, cognitoClient);
-				break;
+		if("/signup".equals(path)) {
+			if("POST".equals(httpMethod)) return handleSignUp(event, context, cognitoClient);
+		}
+		else if("/signin".equals(path)) {
+			if("POST".equals(httpMethod)) return handleSignIn(event, context, cognitoClient);
+		}
+		else if("/tables".equals(path)) {
+			if("POST".equals(httpMethod)) {
+				return handleCreateTable(event, context, cognitoClient);
+			}
+			else if("GET".equals(httpMethod)) {
+				return handleGetTables(event, context, cognitoClient);
+			}
+		}
+		else if(path.matches("/tables/\\d+")) {
+			if("GET".equals(httpMethod)) {
+				return handleGetSpecificTable(event, context, cognitoClient);
+			}
+		}
+		else if("/reservations".equals(path)) {
+			if("POST".equals(httpMethod)) {
+				return handleCreateReservation(event, context, cognitoClient);
+			}
+			else if("GET".equals(httpMethod)) {
+				return handleGetReservations(event, context, cognitoClient);
+			}
 		}
 
 		context.getLogger().log("No handler found for path: " + path + ", and http method: " + httpMethod + ";");
@@ -163,32 +174,46 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
+			ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
 
 			Map<String, Object> responseBody = new HashMap<>();
-			Map<String, String> pathParameters = event.getPathParameters();
-			context.getLogger().log("Path parameter: " + pathParameters);
-			String tableId = pathParameters != null ? pathParameters.get(TABLE_ID_PATHVAR) : null;
-			context.getLogger().log("Table id: " + tableId);
-			if (Objects.isNull(tableId) || tableId.isEmpty()) {
-				ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
-				responseBody.put(TABLES_ATTR, getAllTables(dynamoDb, scanRequest));
-			} else {
-				context.getLogger().log("Handle request with tableId path parameter: " + tableId);
-				Map<String, AttributeValue> keyToGet = new HashMap<>();
-				keyToGet.put(TABLE_ID, new AttributeValue(tableId));
-				GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName(TABLES_TABLE_NAME);
-				Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
-				if (Objects.isNull(item)) {
-					return new APIGatewayProxyResponseEvent().withBody("No item found for " + tableId).withStatusCode(404);
-				}
-				putTableItemToMap(responseBody, item);
-			}
+			responseBody.put(TABLES_ATTR, getAllTables(dynamoDb, scanRequest));
 
 			return formSuccessResponse(responseBody, context);
 		} catch (NotAuthorizedException ex) {
 			context.getLogger().log("Can't get tables because customer is unauthorized. Invalid Access Token.");
 			return new APIGatewayProxyResponseEvent()
 					.withBody("Can't get tables because customer is unauthorized. Invalid Access Token.")
+					.withStatusCode(400);
+		}
+	}
+
+	private APIGatewayProxyResponseEvent handleGetSpecificTable(APIGatewayProxyRequestEvent event, Context context, CognitoIdentityProviderClient cognitoClient) {
+		try {
+			cognitoClient.getUser(GetUserRequest.builder()
+					.accessToken(getAccessToken(getHeadersFromEvent(event, context), context))
+					.build());
+
+			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
+			String tableId = event.getPathParameters().get("tableId");
+			context.getLogger().log("Handle request with tableId path parameter: " + tableId);
+
+			Map<String, AttributeValue> keyToGet = new HashMap<>();
+			keyToGet.put(TABLE_ID, new AttributeValue().withN(tableId));
+			GetItemRequest request = new GetItemRequest().withKey(keyToGet).withTableName(TABLES_TABLE_NAME);
+			Map<String, AttributeValue> item = dynamoDb.getItem(request).getItem();
+			if (Objects.isNull(item)) {
+				return new APIGatewayProxyResponseEvent().withBody("No item found for " + tableId).withStatusCode(404);
+			}
+
+			Map<String, Object> responseBody = new HashMap<>();
+			responseBody.put(TABLES_ATTR, item);
+
+			return formSuccessResponse(responseBody, context);
+		} catch (NotAuthorizedException ex) {
+			context.getLogger().log("Can't get table because customer is unauthorized. Invalid Access Token.");
+			return new APIGatewayProxyResponseEvent()
+					.withBody("Can't get table because customer is unauthorized. Invalid Access Token.")
 					.withStatusCode(400);
 		}
 	}
