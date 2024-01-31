@@ -240,13 +240,13 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				return new APIGatewayProxyResponseEvent()
 						.withStatusCode(400);
 			}
-			item.put("tableNumber", new AttributeValue(tableNumber));
-			item.put("clientName", new AttributeValue(String.valueOf(body.get("clientName"))));
-			item.put("phoneNumber", new AttributeValue(String.valueOf(body.get("phoneNumber"))));
-			item.put("date", new AttributeValue(String.valueOf(body.get("date"))));
-			item.put("slotTimeStart", new AttributeValue(String.valueOf(body.get("slotTimeStart"))));
-			item.put("slotTimeEnd", new AttributeValue(String.valueOf(body.get("slotTimeEnd"))));
-			item.put("id", new AttributeValue(reservationId));
+			item.put("id", new AttributeValue().withS(reservationId));
+			item.put("tableNumber", new AttributeValue().withN(tableNumber));
+			item.put("clientName", new AttributeValue().withS(String.valueOf(body.get("clientName"))));
+			item.put("phoneNumber", new AttributeValue().withS(String.valueOf(body.get("phoneNumber"))));
+			item.put("date", new AttributeValue().withS(String.valueOf(body.get("date"))));
+			item.put("slotTimeStart", new AttributeValue().withS(String.valueOf(body.get("slotTimeStart"))));
+			item.put("slotTimeEnd", new AttributeValue().withS(String.valueOf(body.get("slotTimeEnd"))));
 
 			PutItemRequest putItemRequest = new PutItemRequest(RESERVATIONS_TABLE_NAME, item);
 			dynamoDb.putItem(putItemRequest);
