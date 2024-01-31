@@ -173,12 +173,14 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 					.build());
 
 			AmazonDynamoDB dynamoDb = AmazonDynamoDBClientBuilder.defaultClient();
-			ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
 
 			Map<String, Object> responseBody = new HashMap<>();
 			Map<String, String> pathParameters = event.getPathParameters();
+			context.getLogger().log("Path parameter: " + pathParameters);
 			String tableId = pathParameters != null ? pathParameters.get("tableId") : null;
+			context.getLogger().log("Table id: " + tableId);
 			if (Objects.isNull(tableId) || tableId.isEmpty()) {
+				ScanRequest scanRequest = new ScanRequest().withTableName(TABLES_TABLE_NAME);
 				responseBody.put("tables", getAllTables(dynamoDb, scanRequest));
 			} else {
 				context.getLogger().log("Handle request with tableId path parameter: " + tableId);
